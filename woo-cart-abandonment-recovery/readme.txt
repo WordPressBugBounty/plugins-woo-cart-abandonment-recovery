@@ -3,7 +3,7 @@ Contributors: sujaypawar, wpcrafter
 Tags: woocommerce, cart abandonment, cart recovery
 Requires at least: 5.4
 Tested up to: 6.8
-Stable tag: 2.0.0
+Stable tag: 2.0.1
 Requires PHP: 7.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -25,73 +25,71 @@ No coding. No complicated setup. Just install, enable, and start recovering lost
 🛒 Rebuild carts with 1-click restore links
 💰 Boost AOV with time-sensitive coupons
 
-👉 **Try it out now and start recovering sales within minutes!**
-
 ## Made for Store Owners Who Care About Conversions
 
-### WooCommerce Store Owners
+### 1. WooCommerce Store Owners
 Effortlessly recover lost sales without the need for third-party tools or subscriptions. Just install, activate, and start converting abandoned carts into revenue.
 
-### Fashion & Apparel Stores
+### 2. Fashion & Apparel Stores
 Send timely reminders to shoppers who left behind size, color, or style options. Bring them back with visual product recall and tailored offers.
 
-### DTC Brands & Small Businesses
+### 3. DTC Brands & Small Businesses
 Boost your store's conversion rates with automated email sequences and dynamic coupon codes. Personalize recovery messages to match your brand voice.
 
-### Digital Product Sellers
+### 4. Digital Product Sellers
 Perfect for stores selling courses, software, or downloads. Recover incomplete checkouts with cart restore links that bring customers right back to purchase.
 
-### Growth-Focused Shops
+### 5. Growth-Focused Shops
 Leverage in-depth reports to monitor cart recovery performance. Track email effectiveness and make data-driven tweaks to increase sales over time.
 
 ## 🧰 Powerful Features to Maximize Recoveries
 
-### Automated Recovery Emails
+### 1. Automated Recovery Emails
 Set up and schedule a series of automated emails to go out at key intervals—like 15 minutes, 1 hour, or 24 hours after abandonment. Stay top-of-mind and bring customers back when they're most likely to convert.
 
-### 1-Click Cart Recovery Links
+### 2. 1-Click Cart Recovery Links
 Every email includes a unique link that restores the exact cart contents and checkout details. Shoppers can pick up right where they left off—no friction, no hassle.
 
-### Unique Coupon Codes
+### 3. Unique Coupon Codes
 Automatically generate personalized, time-sensitive discount codes inside your recovery emails. Incentivize quick action and boost your chances of winning back the sale.
 
-### Abandoned Cart Capture
+### 4. Abandoned Cart Capture
 The plugin captures the shopper's email address as soon as they enter it on the checkout page. This means you can follow up—even if they never hit the "Place Order" button.
 
-### Reports & Insights
+### 5. Reports & Insights
 See real-time data on abandoned carts, recovered sales, and email performance. Use built-in analytics to tweak your strategy and increase conversions.
 
-### GDPR-Ready
+### 6. GDPR-Ready
 Easily enable a GDPR consent checkbox on your checkout page. Ensure you're collecting data responsibly and staying compliant with privacy laws.
 
-### Better Analytics Dashboard with Modern UI
+### 7. Better Analytics Dashboard with Modern UI
 Access a cleaner, more user-friendly dashboard with improved visuals and reporting. Quickly understand what's working—at a glance.
 
-### Dynamic Shortcode Support in Email Subjects
+### 8. Dynamic Shortcode Support in Email Subjects
 Use smart shortcodes in email subject lines for personalized, dynamic messaging. Grab attention and improve open rates effortlessly.
 
-### Option to Show Tax/VAT in Emails
+### 9. Option to Show Tax/VAT in Emails
 Display tax or VAT details in recovery emails, based on plugin settings. Helps reduce confusion and builds purchase confidence.
 
-### Product-Specific Reports (Pro)
+### 10. Product-Specific Reports (Coming Soon)
 Track abandoned/recovered stats for each product individually. View product name, number of times abandoned, and recovered—to see which products need attention.
 
-### Advanced Email Tracking (Pro)
+### 11. Advanced Email Tracking (Coming Soon)
 Gain insights into how each email performs with metrics like sent, open rate, click rate, and unsubscribe rate. Perfect for testing and optimizing your recovery strategy.
 
-### Rule Engine for Email Logic (Pro)
+### 12. Rule Engine for Email Logic (Coming Soon)
 Set up smart conditions for when and how emails are sent. Exclude certain products, send product-specific sequences, skip certain emails, or trigger offers based on cart subtotal.
 
-### Real-Time Admin Notifications (Pro)
+### 13. Real-Time Admin Notifications (Coming Soon)
 Get instant alerts when a cart is abandoned or recovered. Stay informed and take action quickly if needed.
 
-### WhatsApp Integration (Pro)
+### 14. WhatsApp Integration (Coming Soon)
 Send cart recovery messages via WhatsApp to connect with customers where they're most active. Boost engagement with a personal touch.
 
-### SMS Recovery Messages (Pro)
+### 15. SMS Recovery Messages (Coming Soon)
 Reach users via SMS for higher visibility and faster conversions. A great addition to your multi-channel recovery strategy.
 
-### OttoKit Integration (Pro)
+### OttoKit Integration (Coming Soon)
 Connect with OttoKit to create powerful automations and sequences beyond email.
 Perfect for advanced marketers and power users.
 
@@ -165,6 +163,14 @@ You can report the issue through our [Bug Bounty Program](https://brainstormforc
 4. General settings for Email, Webhook (Coupon Code), GDPR
 
 == Changelog ==
+
+= Version 2.0.1 - Tuesday, 30th September 2025 =
+- Improvement: Added future compatibility support for the Pro plugin.
+- Improvement: Standardized function calls by replacing direct helper usage with common methods.
+- Improvement: Made minor UI enhancements across multiple screens.
+- Fix: Resolved an issue where the switch UI notice continued to display even after updating to the new UI.
+- Fix: Corrected the improper usage of the _load_textdomain_just_in_time function.
+- Fix: Fixed a critical error that occurred when all order statuses were unchecked in the "Exclude email sending for" option.
 
 = Version 2.0.0 - Thursday, 21st August 2025 =
 - New: Revamped the whole Cart Abandoned user-interface to add a user-friendly touch.
