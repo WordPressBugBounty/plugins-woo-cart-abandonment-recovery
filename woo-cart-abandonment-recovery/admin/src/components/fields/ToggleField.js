@@ -12,10 +12,15 @@ import { useProAccess } from '@Components/pro/useProAccess';
  * @return {boolean} - The normalized boolean value
  */
 const normalizeToggleValue = ( value ) => {
-	if ( value === 'on' ) {
+	if ( value === 'on' || value === '1' ) {
 		return true;
 	}
-	if ( value === '' || value === 'off' || value === 'false' ) {
+	if (
+		value === '' ||
+		value === 'off' ||
+		value === 'false' ||
+		value === '0'
+	) {
 		return false;
 	}
 	return value ?? false;
@@ -40,6 +45,7 @@ const ToggleField = ( {
 	manageState,
 	handleChange,
 	autoSave = true,
+	disabled,
 	isPro = false,
 	proUpgradeMessage = '',
 } ) => {
@@ -138,7 +144,7 @@ const ToggleField = ( {
 					size="md"
 					className="border-none moderncart-toggle-field"
 					role="switch"
-					disabled={ isPro && isFeatureBlocked }
+					disabled={ ( isPro && isFeatureBlocked ) || disabled }
 				/>
 			</div>
 		</FieldWrapper>

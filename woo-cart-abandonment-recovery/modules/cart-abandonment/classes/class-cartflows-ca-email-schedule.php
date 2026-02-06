@@ -211,6 +211,27 @@ class Cartflows_Ca_Email_Schedule {
 
 				$site_title                 = get_bloginfo( 'name' );
 				$email_body_template_footer = str_ireplace( '{site_title}', $site_title, $email_body_template_footer );
+				
+				$address  = get_option( 'woocommerce_store_address' );
+				$address2 = get_option( 'woocommerce_store_address_2' );
+				$city     = get_option( 'woocommerce_store_city' );
+				$postcode = get_option( 'woocommerce_store_postcode' );
+				$country  = get_option( 'woocommerce_default_country' );
+				// Build the address only with non-empty fields.
+				$parts = array_filter(
+					[
+						$address,
+						$address2,
+						$city,
+						$postcode,
+						$country,
+					] 
+				);
+
+				// Join parts with commas.
+				$full_address = implode( ', ', $parts );
+
+				$email_body_template_footer = str_replace( '{store_address}', $full_address, $email_body_template_footer );
 
 				$final_email_body = $email_body_template_header . $body_email_preview . $email_body_template_footer;
 				return $this->send_email( $email_data, $subject_email_preview, $final_email_body, $headers, $preview_email, 'wc_mail' );
@@ -532,7 +553,6 @@ class Cartflows_Ca_Email_Schedule {
 				'coupon_amount'       => $amount,
 				'individual_use'      => $individual_use,
 				'product_ids'         => '',
-				'exclude_product_ids' => '',
 				'usage_limit'         => '1',
 				'usage_count'         => '0',
 				'date_expires'        => $expiry,

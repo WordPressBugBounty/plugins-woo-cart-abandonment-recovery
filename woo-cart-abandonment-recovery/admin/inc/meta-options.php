@@ -43,13 +43,15 @@ class Meta_Options {
 	 */
 	public static function get_meta_settings() {
 
-		$settings     = self::get_setting_fields();
-		$integrations = self::get_integration_fields();
-		$email_fields = self::get_email_template_fields();
+		$settings          = self::get_setting_fields();
+		$integrations      = self::get_integration_fields();
+		$email_fields      = self::get_email_template_fields();
+		$onboarding_fields = self::get_onboarding_fields();
 		return [
 			'settings'     => $settings,
 			'integrations' => $integrations,
 			'email_fields' => $email_fields,
+			'onboarding'   => $onboarding_fields,
 		];
 	}
 
@@ -61,11 +63,22 @@ class Meta_Options {
 		$roles       = wcf_ca()->helper->get_wordpress_user_roles();
 		$roles_array = [];
 		foreach ( $roles as $key => $label ) {
-			$roles_array[] = (object) [
+			$roles_array[] = [
 				'id'   => $key,
 				'name' => $label,
 			];
 		}
+
+		$order_status       = wcf_ca()->helper->get_order_statuses();
+		$order_status_array = [];
+		foreach ( $order_status as $key => $label ) {
+			$order_status_array[] = [
+				'id'   => $key,
+				'name' => $label,
+			];
+		}
+
+		$rollback_options = wcf_ca()->helper->get_rollback_versions_options();
 
 		$settings = [
 			'general-settings'         => [
@@ -90,6 +103,16 @@ class Meta_Options {
 						'min'          => '10',
 						'is_fullwidth' => true,
 					],
+					'wcf-ca-cart-lost-time'        => [
+						'type'         => 'number',
+						'label'        => __( 'Abandoned cart lost time', 'woo-cart-abandonment-recovery' ),
+						'name'         => 'wcf_ca_cart_lost_time',
+						'value'        => wcf_ca()->utils->wcar_get_option( 'wcf_ca_cart_lost_time', WCF_DEFAULT_CART_LOST_TIME ),
+						'desc'         => __( 'Consider cart lost after above entered days of item being added to cart and order not placed.', 'woo-cart-abandonment-recovery' ),
+						'after'        => __( 'days', 'woo-cart-abandonment-recovery' ),
+						'min'          => '10',
+						'is_fullwidth' => true,
+					],
 					'wcf-ca-ignore-users'          => [
 						'type'         => 'multi-select',
 						'label'        => __( 'Disable Tracking For', 'woo-cart-abandonment-recovery' ),
@@ -105,28 +128,7 @@ class Meta_Options {
 						'label'        => __( 'Exclude email sending For', 'woo-cart-abandonment-recovery' ),
 						'name'         => 'wcf_ca_excludes_orders',
 						'value'        => wcf_ca()->utils->wcar_get_option( 'wcf_ca_excludes_orders', [] ),
-						'options'      => [
-							[
-								'id'   => 'pending',
-								'name' => __( 'Pending', 'woo-cart-abandonment-recovery' ),
-							],
-							[
-								'id'   => 'processing',
-								'name' => __( 'Processing', 'woo-cart-abandonment-recovery' ),
-							],
-							[
-								'id'   => 'on-hold',
-								'name' => __( 'On Hold', 'woo-cart-abandonment-recovery' ),
-							],
-							[
-								'id'   => 'completed',
-								'name' => __( 'Completed', 'woo-cart-abandonment-recovery' ),
-							],
-							[
-								'id'   => 'failed',
-								'name' => __( 'Failed', 'woo-cart-abandonment-recovery' ),
-							],
-						],
+						'options'      => $order_status_array,
 						'desc'         => __( 'It will not send future recovery emails to selected order status and will mark as recovered.', 'woo-cart-abandonment-recovery' ),
 						'placeholder'  => __( 'Select order status', 'woo-cart-abandonment-recovery' ),
 						'is_fullwidth' => true,
@@ -234,7 +236,7 @@ class Meta_Options {
 				'fields'   => [
 					'wcf-ca-gdpr-status'  => [
 						'type'         => 'toggle',
-						'label'        => __( 'Enable GDPR Integration', 'woo-cart-abandonment-recovery' ),
+						'label'        => __( 'Enable Email GDPR Integration', 'woo-cart-abandonment-recovery' ),
 						'name'         => 'wcf_ca_gdpr_status',
 						'value'        => wcf_ca()->utils->wcar_get_option( 'wcf_ca_gdpr_status' ),
 						'desc'         => __( 'By enabling this, it will show up confirmation text below the email id on checkout page.', 'woo-cart-abandonment-recovery' ),
@@ -242,7 +244,7 @@ class Meta_Options {
 					],
 					'wcf-ca-gdpr-message' => [
 						'type'         => 'text',
-						'label'        => __( 'GDPR Message', 'woo-cart-abandonment-recovery' ),
+						'label'        => __( 'Email GDPR Message', 'woo-cart-abandonment-recovery' ),
 						'desc'         => '',
 						'name'         => 'wcf_ca_gdpr_message',
 						'value'        => wcf_ca()->utils->wcar_get_option( 'wcf_ca_gdpr_message' ),
@@ -270,6 +272,14 @@ class Meta_Options {
 						'name'         => 'wcf_ca_global_param',
 						'value'        => wcf_ca()->utils->wcar_get_option( 'wcf_ca_global_param' ),
 						'desc'         => __( 'The UTM parameters will be appended to the checkout page links which is available in the recovery emails. For multiple parameters, add each parameter per line.', 'woo-cart-abandonment-recovery' ),
+						'is_fullwidth' => true,
+					],
+					'wcf-ca-rollback'           => [
+						'type'         => 'rollback',
+						'label'        => __( 'Rollback to Previous Version', 'woo-cart-abandonment-recovery' ),
+						'name'         => 'wcf_ca_rollback',
+						'desc'         => __( 'Experiencing an issue with the current version of Cart Abandonment Recovery? Roll back to a previous version to help troubleshoot the problem.', 'woo-cart-abandonment-recovery' ),
+						'options'      => $rollback_options,
 						'is_fullwidth' => true,
 					],
 					// TODO: Remove this after new UI is enabled by default.
@@ -307,6 +317,7 @@ class Meta_Options {
 			],
 		];
 
+		$settings = self::get_pro_setting_fields( $settings );
 		return apply_filters( 'wcar_admin_settings_fields', $settings );
 	}
 
@@ -467,37 +478,6 @@ class Meta_Options {
 				],
 				'priority' => 10,
 			],
-			// phpcs:ignore Squiz.PHP.CommentedOutCode.Found
-			// 'sms' => [
-			// 'title'    => __( 'SMS', 'woo-cart-abandonment-recovery' ),
-			// 'slug'     => 'sms',
-			// 'fields'   => [
-			// 'wcf-sms-tracking-status' => [
-			// 'type'         => 'toggle',
-			// 'label'        => __( 'Enable Webhook', 'woo-cart-abandonment-recovery' ),
-			// 'name'         => 'wcf_sms_tracking_status',
-			// 'value'        => wcf_ca()->utils->wcar_get_option( 'wcf_sms_tracking_status' ),
-			// 'desc'         => __( 'Allows you to trigger webhook automatically upon cart abandonment and recovery.', 'woo-cart-abandonment-recovery' ),
-			// 'is_fullwidth' => true,
-			// ],
-			// ],
-			// 'priority' => 20,
-			// ],
-			// 'whatsapp' => [
-			// 'title'    => __( 'WhatsApp', 'woo-cart-abandonment-recovery' ),
-			// 'slug'     => 'whatsapp',
-			// 'fields'   => [
-			// 'wcf-whatsapp-tracking-status' => [
-			// 'type'         => 'toggle',
-			// 'label'        => __( 'Enable Webhook', 'woo-cart-abandonment-recovery' ),
-			// 'name'         => 'wcf_whatsapp_tracking_status',
-			// 'value'        => wcf_ca()->utils->wcar_get_option( 'wcf_whatsapp_tracking_status' ),
-			// 'desc'         => __( 'Allows you to trigger webhook automatically upon cart abandonment and recovery.', 'woo-cart-abandonment-recovery' ),
-			// 'is_fullwidth' => true,
-			// ],
-			// ],
-			// 'priority' => 30,
-			// ],
 			'ottokit-integration' => [
 				'title'    => __( 'OttoKit', 'woo-cart-abandonment-recovery' ),
 				'slug'     => 'ottokit-integration',
@@ -507,6 +487,8 @@ class Meta_Options {
 				'priority' => 40,
 			],
 		];
+
+		$integrations = array_merge( $integrations, self::get_pro_integration_tabs() );
 
 		return apply_filters( 'wcar_admin_integration_fields', $integrations );
 	}
@@ -783,6 +765,97 @@ class Meta_Options {
 	}
 
 	/**
+	 * Get onboarding fields.
+	 */
+	public static function get_onboarding_fields() {
+		$roles       = wcf_ca()->helper->get_wordpress_user_roles();
+		$roles_array = [];
+		foreach ( $roles as $key => $label ) {
+			$roles_array[] = [
+				'id'   => $key,
+				'name' => $label,
+			];
+		}
+
+		$fields = [
+			'follow-up-channels' => [
+				'slug'   => 'follow-up-channels',
+				'fields' => [
+					'wcf-ca-enable-email' => [
+						'type'         => 'toggle',
+						'label'        => __( 'Email Follow Ups (Default)', 'woo-cart-abandonment-recovery' ),
+						'name'         => 'wcf_ca_status',
+						'value'        => true,
+						'desc'         => __( 'Allows you to send emails upon cart abandonment.', 'woo-cart-abandonment-recovery' ),
+						'disabled'     => true,
+						'is_fullwidth' => true,
+					],
+				],
+			],
+			'recovery-settings'  => [
+				'slug'     => 'recovery-settings',
+				'fields'   => [
+					'wcf-ca-status'         => [
+						'type'         => 'toggle',
+						'label'        => __( 'Enable Tracking', 'woo-cart-abandonment-recovery' ),
+						'name'         => 'wcf_ca_status',
+						'value'        => wcf_ca()->utils->wcar_get_option( 'wcf_ca_status' ),
+						'desc'         => __( 'Cart will be considered abandoned if order is not completed in cut-off time.', 'woo-cart-abandonment-recovery' ),
+						'is_fullwidth' => true,
+					],
+					'wcf-ca-cut-off-time'   => [
+						'type'         => 'number',
+						'label'        => __( 'Cart abandoned cut-off time', 'woo-cart-abandonment-recovery' ),
+						'name'         => 'wcf_ca_cron_run_time',
+						'value'        => wcf_ca()->utils->wcar_get_option( 'wcf_ca_cron_run_time', 20 ),
+						'desc'         => __( 'Consider cart abandoned after above entered minutes of item being added to cart and order not placed.', 'woo-cart-abandonment-recovery' ),
+						'after'        => __( 'minutes', 'woo-cart-abandonment-recovery' ),
+						'min'          => '10',
+						'is_fullwidth' => true,
+					],
+					'wcf-ca-cart-lost-time' => [
+						'type'         => 'number',
+						'label'        => __( 'Abandoned cart lost time', 'woo-cart-abandonment-recovery' ),
+						'name'         => 'wcf_ca_cart_lost_time',
+						'value'        => wcf_ca()->utils->wcar_get_option( 'wcf_ca_cart_lost_time', WCF_DEFAULT_CART_LOST_TIME ),
+						'desc'         => __( 'Consider cart lost after above entered days of item being added to cart and order not placed.', 'woo-cart-abandonment-recovery' ),
+						'after'        => __( 'days', 'woo-cart-abandonment-recovery' ),
+						'min'          => '10',
+						'is_fullwidth' => true,
+					],
+					'wcf-ca-ignore-users'   => [
+						'type'         => 'multi-select',
+						'label'        => __( 'Disable Tracking For', 'woo-cart-abandonment-recovery' ),
+						'name'         => 'wcf_ca_ignore_users',
+						'value'        => wcf_ca()->utils->wcar_get_option( 'wcf_ca_ignore_users', [] ),
+						'options'      => $roles_array,
+						'desc'         => __( 'It will ignore selected users from abandonment process when they logged in, and hence they can not receive mail for cart abandoned by themselves.', 'woo-cart-abandonment-recovery' ),
+						'placeholder'  => __( 'Select user roles', 'woo-cart-abandonment-recovery' ),
+						'is_fullwidth' => true,
+					],
+				],
+				'priority' => 10,
+			],
+		];
+
+		if ( ! _is_wcar_pro_license_activated() ) {
+			$fields['follow-up-channels']['fields']['wcf-ca-sms-tracking-status'] = [
+				'type'                => 'toggle',
+				'label'               => __( 'Enable SMS Follow-ups', 'woo-cart-abandonment-recovery' ),
+				'name'                => 'wcf_ca_sms_tracking_status',
+				'value'               => false,
+				'desc'                => __( 'Automatically send SMS reminders to customers when they abandon their cart.', 'woo-cart-abandonment-recovery' ),
+				'is_fullwidth'        => true,
+				'is_pro'              => true,
+				'pro_upgrade_message' => '<span style="font-weight: 600;">SMS Follow Up</span> lets you follow up and recover revenue via SMS.',
+			];
+		}
+
+		$fields = apply_filters( 'wcar_admin_onboarding_fields', $fields );
+		return $fields;
+	}
+
+	/**
 	 * Get email template pro fields.
 	 */
 	public static function get_pro_email_template_fields() {
@@ -792,10 +865,10 @@ class Meta_Options {
 		return [
 			'exclude_product_ids'      => [
 				'type'                => 'product-search',
-				'label'               => __( 'Exclude Products', 'woo-cart-abandonment-recovery-pro' ),
+				'label'               => __( 'Exclude Products', 'woo-cart-abandonment-recovery' ),
 				'name'                => 'exclude_product_ids',
-				'desc'                => __( 'Select products for which the coupon should not be created.', 'woo-cart-abandonment-recovery-pro' ),
-				'placeholder'         => __( 'Type to search a product', 'woo-cart-abandonment-recovery-pro' ),
+				'desc'                => __( 'Select products for which the coupon should not be created.', 'woo-cart-abandonment-recovery' ),
+				'placeholder'         => __( 'Type to search a product', 'woo-cart-abandonment-recovery' ),
 				'conditions'          => [
 					'fields' => [
 						[
@@ -806,20 +879,74 @@ class Meta_Options {
 					],
 				],
 				'is_pro'              => true,
-				'pro_upgrade_message' => 'Exclude Products gives you flexibility by keeping certain products out of coupon offers.',
+				'pro_upgrade_message' => 'Exclude Products lets you skip certain products from coupon offers.',
 				'priority'            => 150,
 			],
 			'enable_email_rule_engine' => [
 				'type'                => 'toggle',
-				'label'               => __( 'Dynamic Conditions', 'woo-cart-abandonment-recovery-pro' ),
+				'label'               => __( 'Dynamic Conditions', 'woo-cart-abandonment-recovery' ),
 				'name'                => 'enable_email_rule_engine',
-				'desc'                => __( 'Set conditions to automatically control when this email is sent.', 'woo-cart-abandonment-recovery-pro' ),
+				'desc'                => __( 'Set conditions to automatically control when this email is sent.', 'woo-cart-abandonment-recovery' ),
 				'is_fullwidth'        => true,
 				'group'               => 'rule_engine',
 				'is_pro'              => true,
-				'pro_upgrade_message' => 'Dynamic Conditions let you control exactly when emails are sent for smarter recovery.',
+				'pro_upgrade_message' => 'Dynamic Conditions let you decide when the email should be sent.',
 				'priority'            => 51,
 			],
 		];
+	}
+
+	/**
+	 * Get pro integration tabs.
+	 */
+	public static function get_pro_integration_tabs() {
+		if ( _is_wcar_pro_license_activated() ) {
+			return [];
+		}
+		$pro_fields = [
+			'sms-integration' => [
+				'title'    => __( 'SMS', 'woo-cart-abandonment-recovery' ),
+				'slug'     => 'sms-integration',
+				'fields'   => [
+					'wcf-ca-sms-tracking-status' => [
+						'type'                => 'toggle',
+						'label'               => __( 'Enable SMS Follow-ups', 'woo-cart-abandonment-recovery' ),
+						'name'                => 'wcf_ca_sms_tracking_status',
+						'is_fullwidth'        => true,
+						'is_pro'              => true,
+						'pro_upgrade_message' => __( 'Automatically send SMS reminders to customers when they abandon their cart.', 'woo-cart-abandonment-recovery' ),
+						'priority'            => 51,
+					],
+				],
+				'priority' => 20,
+				'is_pro'   => true,
+			],
+		];
+
+		return $pro_fields;
+	}
+
+	/**
+	 * Get pro setting fields.
+	 * 
+	 * @param array $settings Settings.
+	 *
+	 * @return array
+	 */
+	public static function get_pro_setting_fields( $settings ) {
+		if ( _is_wcar_pro_license_activated() ) {
+			return $settings;
+		}
+
+		$settings['gdpr-settings']['fields']['wcf-ca-phone-gdpr-status'] = [
+			'type'                => 'toggle',
+			'label'               => __( 'Enable Phone GDPR Integration', 'woo-cart-abandonment-recovery' ),
+			'name'                => 'wcf_ca_phone_gdpr_status',
+			'is_fullwidth'        => true,
+			'is_pro'              => true,
+			'pro_upgrade_message' => __( 'Show a GDPR consent message below the phone number field on the checkout page.', 'woo-cart-abandonment-recovery' ),
+		];
+
+		return $settings;
 	}
 }
