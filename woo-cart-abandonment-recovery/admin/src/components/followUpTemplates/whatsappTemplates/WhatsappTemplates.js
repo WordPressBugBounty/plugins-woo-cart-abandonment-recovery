@@ -17,11 +17,11 @@ import SkeletonLoader from '@Components/common/skeletons/SkeletonLoader';
 import { EmptyBlock } from '@Components/common/empty-blocks';
 import AppTooltip from '@Components/common/AppTooltip';
 import ConfirmationModal from '@Components/common/ConfirmationModal';
-import SmsTemplatesDrawer from './SmsTemplatesDrawer';
-import SmsPreview from './SmsPreview';
+import WhatsappTemplatesDrawer from './WhatsappTemplatesDrawer';
+import WhatsappPreview from './WhatsappPreview';
 import TemplatesNav from '../TemplatesNav';
 
-const SmsTemplates = () => {
+const WhatsappTemplates = () => {
 	const [ selected, setSelected ] = useState( [] );
 	const [ searchText, setSearchText ] = useState( '' );
 	const [ isLoading, setIsLoading ] = useState( true );
@@ -39,16 +39,16 @@ const SmsTemplates = () => {
 
 	useEffect( () => {
 		if ( ! isFeatureBlocked ) {
-			fetchSmsTemplates();
+			fetchWhatsappTemplates();
 		} else {
 			setIsLoading( false );
 		}
 	}, [] );
 
-	const fetchSmsTemplates = async () => {
+	const fetchWhatsappTemplates = async () => {
 		try {
 			await doApiFetch(
-				'/wcar-pro/api/admin/sms-template',
+				'/wcar-pro/api/admin/whatsapp-template',
 				{},
 				'GET',
 				( response ) => {
@@ -56,7 +56,10 @@ const SmsTemplates = () => {
 					setIsLoading( false );
 				},
 				( error ) => {
-					console.error( 'Error fetching sms templates:', error );
+					console.error(
+						'Error fetching whatsapp templates:',
+						error
+					);
 					setIsLoading( false );
 				}
 			);
@@ -102,10 +105,10 @@ const SmsTemplates = () => {
 	const handleBulkDelete = () => {
 		setIsDeleting( true );
 		const ajaxUrl = cart_abandonment_admin?.ajax_url || window.ajaxurl;
-		const nonce = cart_abandonment_admin?.delete_sms_template_nonce;
+		const nonce = cart_abandonment_admin?.delete_whatsapp_template_nonce;
 
 		const formData = new window.FormData();
-		formData.append( 'action', 'wcar_pro_delete_sms_template' );
+		formData.append( 'action', 'wcar_pro_delete_whatsapp_template' );
 		selected.forEach( ( id ) => formData.append( 'ids[]', id ) );
 		formData.append( 'security', nonce );
 
@@ -161,10 +164,10 @@ const SmsTemplates = () => {
 	const handleSingleDelete = () => {
 		setIsDeleting( true );
 		const ajaxUrl = cart_abandonment_admin?.ajax_url || window.ajaxurl;
-		const nonce = cart_abandonment_admin?.delete_sms_template_nonce;
+		const nonce = cart_abandonment_admin?.delete_whatsapp_template_nonce;
 
 		const formData = new window.FormData();
-		formData.append( 'action', 'wcar_pro_delete_sms_template' );
+		formData.append( 'action', 'wcar_pro_delete_whatsapp_template' );
 		formData.append( 'ids[]', deleteModal.id );
 		formData.append( 'security', nonce );
 
@@ -247,10 +250,10 @@ const SmsTemplates = () => {
 		);
 		/* eslint-enable */
 		const formData = new window.FormData();
-		formData.append( 'action', 'wcar_pro_update_sms_template_status' );
+		formData.append( 'action', 'wcar_pro_update_whatsapp_template_status' );
 		formData.append(
 			'security',
-			cart_abandonment_admin?.update_sms_template_status_nonce
+			cart_abandonment_admin?.update_whatsapp_template_status_nonce
 		);
 		formData.append( 'id', id );
 		// Send 1 for enabled, 0 for disabled
@@ -313,10 +316,10 @@ const SmsTemplates = () => {
 
 	const handleDuplicate = ( item ) => {
 		const formData = new window.FormData();
-		formData.append( 'action', 'wcar_pro_clone_sms_template' );
+		formData.append( 'action', 'wcar_pro_clone_whatsapp_template' );
 		formData.append(
 			'security',
-			cart_abandonment_admin?.clone_sms_template_nonce
+			cart_abandonment_admin?.clone_whatsapp_template_nonce
 		);
 		formData.append( 'id', item.id );
 
@@ -378,48 +381,6 @@ const SmsTemplates = () => {
 		}
 	};
 
-	const handleRestoreDefaultSms = () => {
-		const formData = new window.FormData();
-		formData.append( 'action', 'wcar_pro_restore_sms_templates' );
-		formData.append(
-			'security',
-			cart_abandonment_admin?.restore_sms_templates_nonce
-		);
-
-		doApiFetch(
-			cart_abandonment_admin?.ajax_url || window.ajaxurl,
-			formData,
-			'POST',
-			( response ) => {
-				if ( response.success ) {
-					setTemplates( response.data.templates );
-					toast.success(
-						__(
-							'Default templates restored',
-							'woo-cart-abandonment-recovery'
-						)
-					);
-				} else {
-					toast.error(
-						__( 'Restore failed', 'woo-cart-abandonment-recovery' ),
-						{
-							description: response.data?.message || '',
-						}
-					);
-				}
-			},
-			( error ) => {
-				toast.error(
-					__( 'Restore failed', 'woo-cart-abandonment-recovery' ),
-					{
-						description: error?.message || '',
-					}
-				);
-			},
-			true
-		);
-	};
-
 	const truncateText = ( text, maxLength = 60 ) => {
 		return text.length > maxLength
 			? text.slice( 0, maxLength ) + '...'
@@ -444,7 +405,7 @@ const SmsTemplates = () => {
 	if ( isFeatureBlocked ) {
 		return (
 			// Show dummy data with modal overlay when pro is not active or feature is blocked
-			<SmsPreview />
+			<WhatsappPreview />
 		);
 	}
 
@@ -452,7 +413,7 @@ const SmsTemplates = () => {
 		<>
 			<div className="flex flex-col md:flex-row gap-4 md:gap-0 justify-between relative">
 				<div className="flex flex-row flex-wrap gap-4 items-center">
-					<TemplatesNav currentTab="sms" />
+					<TemplatesNav currentTab="whatsapp" />
 					{ ! isLoading && selected.length > 0 && (
 						<div className="flex gap-4 items-center border-0 border-l border-solid border-gray-200">
 							<Button
@@ -510,20 +471,6 @@ const SmsTemplates = () => {
 						disabled={ isLoading }
 					/>
 					<Button
-						iconPosition="left"
-						size="sm"
-						tag="button"
-						type="button"
-						variant="outline"
-						disabled={ isLoading }
-						onClick={ handleRestoreDefaultSms }
-					>
-						{ __(
-							'Restore Default Templates',
-							'woo-cart-abandonment-recovery'
-						) }
-					</Button>
-					<Button
 						className=""
 						icon={ <PlusIcon aria-label="icon" role="img" /> }
 						iconPosition="left"
@@ -559,7 +506,7 @@ const SmsTemplates = () => {
 						'woo-cart-abandonment-recovery'
 					) }
 					description={ __(
-						'Follow Up SMS Templates data will appear here after templates are created',
+						'Follow Up WhatsApp Templates data will appear here after templates are created',
 						'woo-cart-abandonment-recovery'
 					) }
 				/>
@@ -587,38 +534,6 @@ const SmsTemplates = () => {
 								'Trigger After',
 								'woo-cart-abandonment-recovery'
 							) }
-						</Table.HeadCell>
-						<Table.HeadCell>
-							<div className="flex items-center justify-center gap-1.5">
-								{ __(
-									'Sent',
-									'woo-cart-abandonment-recovery'
-								) }
-							</div>
-						</Table.HeadCell>
-						<Table.HeadCell>
-							<div className="flex items-center justify-center gap-1.5">
-								{ __(
-									'Click Rate',
-									'woo-cart-abandonment-recovery'
-								) }
-							</div>
-						</Table.HeadCell>
-						<Table.HeadCell>
-							<div className="flex items-center justify-center gap-1.5">
-								{ __(
-									'Conversion Rate',
-									'woo-cart-abandonment-recovery'
-								) }
-							</div>
-						</Table.HeadCell>
-						<Table.HeadCell>
-							<div className="flex items-center justify-center gap-1.5">
-								{ __(
-									'Unsubscribed',
-									'woo-cart-abandonment-recovery'
-								) }
-							</div>
 						</Table.HeadCell>
 						<Table.HeadCell>
 							{ __( 'Status', 'woo-cart-abandonment-recovery' ) }
@@ -668,27 +583,9 @@ const SmsTemplates = () => {
 
 									<Table.Cell>
 										{ formatDuration(
-											item.sms_frequency,
-											item.sms_frequency_unit
+											item.whatsapp_frequency,
+											item.whatsapp_frequency_unit
 										) }
-									</Table.Cell>
-									<Table.Cell className="text-center">
-										{ item?.sent || '-' }
-									</Table.Cell>
-									<Table.Cell className="text-center">
-										{ item?.click_rate
-											? `${ item.click_rate }%`
-											: '-' }
-									</Table.Cell>
-									<Table.Cell className="text-center">
-										{ item?.conversion_rate
-											? `${ item.conversion_rate }%`
-											: '-' }
-									</Table.Cell>
-									<Table.Cell className="text-center">
-										{ item?.unsubscribe_rate
-											? `${ item.unsubscribe_rate }%`
-											: '-' }
 									</Table.Cell>
 									<Table.Cell>
 										<Switch
@@ -705,7 +602,9 @@ const SmsTemplates = () => {
 											value={
 												'on' === item?.is_activated
 											}
-											name={ 'wcf_activate_sms_template' }
+											name={
+												'wcf_activate_whatsapp_template'
+											}
 											onChange={ ( val ) =>
 												handleToggleStatus(
 													item.id,
@@ -816,7 +715,7 @@ const SmsTemplates = () => {
 				</Table>
 			) }
 
-			<SmsTemplatesDrawer
+			<WhatsappTemplatesDrawer
 				open={ open }
 				setOpen={ setOpen }
 				template={ template }
@@ -865,5 +764,5 @@ const SmsTemplates = () => {
 	);
 };
 
-export default SmsTemplates;
+export default WhatsappTemplates;
 

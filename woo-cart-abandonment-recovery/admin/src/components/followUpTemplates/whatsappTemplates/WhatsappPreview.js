@@ -11,138 +11,86 @@ import { __ } from '@wordpress/i18n';
 import { ProUpgradeCta } from '@Components/pro';
 import TemplatesNav from '../TemplatesNav';
 
-const SmsPreview = () => {
+const WhatsappPreview = () => {
 	// Temporary mock data for table preview
 	const data = [
 		{
-			id: 'sms-1',
-			template_name: 'Welcome Back Reminder',
-			sms_frequency: 15,
-			sms_frequency_unit: 'MINUTE',
-			sent: 12000,
-			click_rate: 18.5,
-			conversion_rate: 6.2,
-			unsubscribe_rate: 0.8,
+			id: 'message-1',
+			template_name: 'Welcome Reminder',
+			whatsapp_frequency: 10,
+			whatsapp_frequency_unit: 'MINUTE',
 		},
 		{
-			id: 'sms-2',
+			id: 'message-2',
 			template_name: 'First Follow-up',
-			sms_frequency: 2,
-			sms_frequency_unit: 'HOUR',
-			sent: 9800,
-			click_rate: 15.1,
-			conversion_rate: 5.4,
-			unsubscribe_rate: 0.6,
+			whatsapp_frequency: 1,
+			whatsapp_frequency_unit: 'HOUR',
 		},
 		{
-			id: 'sms-3',
-			template_name: '24h Nudge',
-			sms_frequency: 1,
-			sms_frequency_unit: 'DAY',
-			sent: 8700,
-			click_rate: 12.3,
-			conversion_rate: 4.1,
-			unsubscribe_rate: 0.5,
+			id: 'message-3',
+			template_name: '24h Cart Nudge',
+			whatsapp_frequency: 24,
+			whatsapp_frequency_unit: 'HOUR',
 		},
 		{
-			id: 'sms-4',
-			template_name: 'Last Chance Offer',
-			sms_frequency: 3,
-			sms_frequency_unit: 'DAY',
-			sent: 7600,
-			click_rate: 20.7,
-			conversion_rate: 8.9,
-			unsubscribe_rate: 1.2,
+			id: 'message-4',
+			template_name: 'Final Offer Alert',
+			whatsapp_frequency: 2,
+			whatsapp_frequency_unit: 'DAY',
 		},
 		{
-			id: 'sms-5',
-			template_name: 'Cart Value Upsell',
-			sms_frequency: 6,
-			sms_frequency_unit: 'HOUR',
-			sent: 6400,
-			click_rate: 17.9,
-			conversion_rate: 7.3,
-			unsubscribe_rate: 0.9,
+			id: 'message-5',
+			template_name: 'Upsell Suggestion',
+			whatsapp_frequency: 12,
+			whatsapp_frequency_unit: 'HOUR',
 		},
 		{
-			id: 'sms-6',
-			template_name: 'Free Shipping Push',
-			sms_frequency: 12,
-			sms_frequency_unit: 'HOUR',
-			sent: 7100,
-			click_rate: 22.4,
-			conversion_rate: 10.1,
-			unsubscribe_rate: 1.0,
+			id: 'message-6',
+			template_name: 'Free Shipping Reminder',
+			whatsapp_frequency: 8,
+			whatsapp_frequency_unit: 'HOUR',
 		},
 		{
-			id: 'sms-7',
-			template_name: 'Weekend Deal Teaser',
-			sms_frequency: 2,
-			sms_frequency_unit: 'DAY',
-			sent: 5800,
-			click_rate: 14.6,
-			conversion_rate: 5.0,
-			unsubscribe_rate: 0.7,
+			id: 'message-7',
+			template_name: 'Weekend Special Teaser',
+			whatsapp_frequency: 3,
+			whatsapp_frequency_unit: 'DAY',
 		},
 		{
-			id: 'sms-8',
-			template_name: 'VIP Customer Ping',
-			sms_frequency: 30,
-			sms_frequency_unit: 'MINUTE',
-			sent: 3200,
-			click_rate: 28.9,
-			conversion_rate: 14.8,
-			unsubscribe_rate: 0.3,
+			id: 'message-8',
+			template_name: 'VIP Notification',
+			whatsapp_frequency: 20,
+			whatsapp_frequency_unit: 'MINUTE',
 		},
 		{
-			id: 'sms-9',
+			id: 'message-9',
 			template_name: 'Low Stock Alert',
-			sms_frequency: 45,
-			sms_frequency_unit: 'MINUTE',
-			sent: 4100,
-			click_rate: 31.2,
-			conversion_rate: 16.5,
-			unsubscribe_rate: 0.4,
+			whatsapp_frequency: 30,
+			whatsapp_frequency_unit: 'MINUTE',
 		},
 		{
-			id: 'sms-10',
-			template_name: 'Bundle Reminder',
-			sms_frequency: 4,
-			sms_frequency_unit: 'HOUR',
-			sent: 5300,
-			click_rate: 19.8,
-			conversion_rate: 9.2,
-			unsubscribe_rate: 0.8,
+			id: 'message-10',
+			template_name: 'Bundle Promotion',
+			whatsapp_frequency: 6,
+			whatsapp_frequency_unit: 'HOUR',
 		},
 		{
-			id: 'sms-11',
-			template_name: 'Seasonal Promo',
-			sms_frequency: 1,
-			sms_frequency_unit: 'DAY',
-			sent: 8900,
-			click_rate: 16.4,
-			conversion_rate: 6.7,
-			unsubscribe_rate: 1.1,
+			id: 'message-11',
+			template_name: 'Seasonal Campaign',
+			whatsapp_frequency: 2,
+			whatsapp_frequency_unit: 'DAY',
 		},
 		{
-			id: 'sms-12',
+			id: 'message-12',
 			template_name: 'Review Request',
-			sms_frequency: 2,
-			sms_frequency_unit: 'DAY',
-			sent: 6700,
-			click_rate: 9.5,
-			conversion_rate: 3.2,
-			unsubscribe_rate: 0.6,
+			whatsapp_frequency: 3,
+			whatsapp_frequency_unit: 'DAY',
 		},
 		{
-			id: 'sms-13',
-			template_name: 'Win-Back Offer',
-			sms_frequency: 5,
-			sms_frequency_unit: 'DAY',
-			sent: 4500,
-			click_rate: 13.7,
-			conversion_rate: 4.9,
-			unsubscribe_rate: 1.4,
+			id: 'message-13',
+			template_name: 'Win-Back Campaign',
+			whatsapp_frequency: 7,
+			whatsapp_frequency_unit: 'DAY',
 		},
 	];
 
@@ -164,7 +112,7 @@ const SmsPreview = () => {
 	return (
 		<div className="flex flex-col gap-4">
 			<div className="flex flex-col md:flex-row gap-4 md:gap-0 justify-between relative">
-				<TemplatesNav currentTab={ 'sms' } />
+				<TemplatesNav currentTab={ 'whatsapp' } />
 				<div className="flex flex-col md:flex-row gap-4">
 					<Input
 						placeholder={ __(
@@ -183,19 +131,6 @@ const SmsPreview = () => {
 						className="w-full lg:w-52"
 						disabled={ true }
 					/>
-					<Button
-						iconPosition="left"
-						size="sm"
-						tag="button"
-						type="button"
-						variant="outline"
-						disabled={ true }
-					>
-						{ __(
-							'Restore Default Templates',
-							'woo-cart-abandonment-recovery'
-						) }
-					</Button>
 					<Button
 						className=""
 						icon={ <PlusIcon aria-label="icon" role="img" /> }
@@ -232,38 +167,6 @@ const SmsPreview = () => {
 							) }
 						</Table.HeadCell>
 						<Table.HeadCell>
-							<div className="flex items-center justify-center gap-1.5">
-								{ __(
-									'Sent',
-									'woo-cart-abandonment-recovery'
-								) }
-							</div>
-						</Table.HeadCell>
-						<Table.HeadCell>
-							<div className="flex items-center justify-center gap-1.5">
-								{ __(
-									'Click Rate',
-									'woo-cart-abandonment-recovery'
-								) }
-							</div>
-						</Table.HeadCell>
-						<Table.HeadCell>
-							<div className="flex items-center justify-center gap-1.5">
-								{ __(
-									'Conversion Rate',
-									'woo-cart-abandonment-recovery'
-								) }
-							</div>
-						</Table.HeadCell>
-						<Table.HeadCell>
-							<div className="flex items-center justify-center gap-1.5">
-								{ __(
-									'Unsubscribed',
-									'woo-cart-abandonment-recovery'
-								) }
-							</div>
-						</Table.HeadCell>
-						<Table.HeadCell>
 							{ __( 'Status', 'woo-cart-abandonment-recovery' ) }
 						</Table.HeadCell>
 						<Table.HeadCell className="text-right">
@@ -281,27 +184,9 @@ const SmsPreview = () => {
 
 								<Table.Cell>
 									{ formatDuration(
-										item.sms_frequency,
-										item.sms_frequency_unit
+										item.whatsapp_frequency,
+										item.whatsapp_frequency_unit
 									) }
-								</Table.Cell>
-								<Table.Cell className="text-center">
-									{ item?.sent || '-' }
-								</Table.Cell>
-								<Table.Cell className="text-center">
-									{ item?.click_rate
-										? `${ item.click_rate }%`
-										: '-' }
-								</Table.Cell>
-								<Table.Cell className="text-center">
-									{ item?.conversion_rate
-										? `${ item.conversion_rate }%`
-										: '-' }
-								</Table.Cell>
-								<Table.Cell className="text-center">
-									{ item?.unsubscribe_rate
-										? `${ item.unsubscribe_rate }%`
-										: '-' }
 								</Table.Cell>
 								<Table.Cell>
 									<Switch
@@ -392,5 +277,5 @@ const SmsPreview = () => {
 	);
 };
 
-export default SmsPreview;
+export default WhatsappPreview;
 

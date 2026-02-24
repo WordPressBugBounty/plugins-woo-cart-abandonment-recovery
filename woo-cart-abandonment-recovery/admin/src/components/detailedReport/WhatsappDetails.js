@@ -12,17 +12,17 @@ import { EmptyBlock } from '@Components/common/empty-blocks';
 import { useProAccess } from '@Components/pro/useProAccess';
 import { ProUpgradeCta } from '@Components/pro';
 
-const SmsDetails = ( {
-	scheduledSms,
+const WhatsappDetails = ( {
+	scheduledMessages,
 	isLoading,
-	handleRescheduleSms,
+	handleRescheduleMessage,
 	buttonLoading,
 	disabled,
 } ) => {
 	const { shouldBlockProFeatures } = useProAccess();
 	const isFeatureBlocked = shouldBlockProFeatures();
 
-	const smsStatus = ( status ) => {
+	const messageStatus = ( status ) => {
 		const config = {
 			'-1': {
 				label: __( 'Not Sent', 'woo-cart-abandonment-recovery' ),
@@ -80,7 +80,7 @@ const SmsDetails = ( {
 						size="sm"
 						tag="h2"
 						title={ __(
-							'SMS Details',
+							'WhatsApp Details',
 							'woo-cart-abandonment-recovery'
 						) }
 						className="[&_h2]:text-gray-900"
@@ -95,7 +95,7 @@ const SmsDetails = ( {
 						iconPosition="left"
 					>
 						{ __(
-							'Reschedule SMS',
+							'Reschedule Messages',
 							'woo-cart-abandonment-recovery'
 						) }
 					</Button>
@@ -109,7 +109,7 @@ const SmsDetails = ( {
 						description={
 							/* translators: %%1$s: Link HTML Start and %2$sof: Link HTML End. */
 							__(
-								'View all scheduled SMS follow-ups in SMS details.',
+								'View all scheduled WhatsApp follow-ups in WhatsApp details.',
 								'woo-cart-abandonment-recovery'
 							)
 						}
@@ -129,7 +129,7 @@ const SmsDetails = ( {
 					size="sm"
 					tag="h2"
 					title={ __(
-						'SMS Details',
+						'WhatsApp Details',
 						'woo-cart-abandonment-recovery'
 					) }
 					className="[&_h2]:text-gray-900"
@@ -140,7 +140,7 @@ const SmsDetails = ( {
 					tag="button"
 					type="button"
 					variant="outline"
-					onClick={ handleRescheduleSms }
+					onClick={ handleRescheduleMessage }
 					disabled={
 						isLoading ||
 						buttonLoading ||
@@ -159,7 +159,10 @@ const SmsDetails = ( {
 					}
 					iconPosition="left"
 				>
-					{ __( 'Reschedule SMS', 'woo-cart-abandonment-recovery' ) }
+					{ __(
+						'Reschedule Messages',
+						'woo-cart-abandonment-recovery'
+					) }
 				</Button>
 			</div>
 			{ isLoading ? (
@@ -169,7 +172,7 @@ const SmsDetails = ( {
 						<SkeletonLoader key={ index } height="50px" />
 					) ) }
 				</div>
-			) : scheduledSms.length > 0 ? (
+			) : scheduledMessages.length > 0 ? (
 				<Table>
 					<Table.Head>
 						<Table.HeadCell>
@@ -180,7 +183,7 @@ const SmsDetails = ( {
 						</Table.HeadCell>
 						<Table.HeadCell>
 							{ __(
-								'SMS Body',
+								'WhatsApp Template',
 								'woo-cart-abandonment-recovery'
 							) }
 						</Table.HeadCell>
@@ -198,12 +201,12 @@ const SmsDetails = ( {
 						</Table.HeadCell>
 					</Table.Head>
 					<Table.Body>
-						{ scheduledSms.map( ( item, index ) => (
+						{ scheduledMessages.map( ( item, index ) => (
 							<Table.Row key={ index }>
 								<Table.Cell>{ item.template_name }</Table.Cell>
 								<Table.Cell className="max-w-48">
 									<div className="truncate">
-										{ item.sms_body }
+										{ item.whatsapp_template }
 									</div>
 								</Table.Cell>
 								<Table.Cell>
@@ -212,7 +215,7 @@ const SmsDetails = ( {
 										: '-' }
 								</Table.Cell>
 								<Table.Cell>
-									{ smsStatus( item.sms_sent ) }
+									{ messageStatus( item.message_sent ) }
 								</Table.Cell>
 								<Table.Cell>{ item.scheduled_time }</Table.Cell>
 							</Table.Row>
@@ -235,4 +238,5 @@ const SmsDetails = ( {
 	);
 };
 
-export default SmsDetails;
+export default WhatsappDetails;
+
