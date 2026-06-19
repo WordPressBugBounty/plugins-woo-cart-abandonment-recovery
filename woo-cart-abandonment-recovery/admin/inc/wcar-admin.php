@@ -115,7 +115,7 @@ class Wcar_Admin {
 			'wcar_pro_status'         => $this->get_plugin_status( 'woo-cart-abandonment-recovery-pro/woo-cart-abandonment-recovery-pro.php' ),
 			'wcar_pro_type'           => $this->get_version_display(),
 			'is_pro'                  => _is_wcar_pro(),
-			'upgrade_to_pro_url'      => wcf_ca()->helper->get_upgrade_to_pro_url( 'cart-abandonment-recovery-pricing' ),
+			'upgrade_to_pro_url'      => wcf_ca()->helper->get_upgrade_to_pro_url( 'cart-abandonment-recovery/pricing/' ),
 			'license_status'          => _is_wcar_pro_license_activated(),
 			'knowledge_base'          => $this->get_knowledge_base(),
 			'whats_new_rss_feed'      => $this->get_whats_new_rss_feeds_data(),

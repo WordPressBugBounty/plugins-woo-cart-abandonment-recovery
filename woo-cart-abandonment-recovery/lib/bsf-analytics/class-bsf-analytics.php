@@ -268,13 +268,12 @@ if ( ! class_exists( 'BSF_Analytics' ) ) {
 				/* translators: %s product name */
 				$notice_string = sprintf(
 					__(
-						'Help shape the future of %1$s!<br><br>Become a contributor by sharing how you use %1$s — so we can build features that matter to you, fix issues faster, and make smarter decisions. We only collect <strong>non-sensitive</strong> information like your PHP version and which features you use.'
-					),
+						'Help shape the future of %1$s!<br><br>Become a contributor by sharing how you use %1$s — so we can build features that matter to you, fix issues faster, and make smarter decisions. We only collect <strong>non-sensitive</strong> information like your PHP version and which features you use.', 'woo-cart-abandonment-recovery' ),
 					'<strong>' . esc_html( $data['product_name'] ) . '</strong>'
 				);
 				
 				if ( is_multisite() ) {
-					$notice_string .= __( 'This will be applicable for all sites from the network.' );
+					$notice_string .= __( 'This will be applicable for all sites from the network.', 'woo-cart-abandonment-recovery' );
 				}
 
 				$language_dir = is_rtl() ? 'rtl' : 'ltr';
@@ -298,7 +297,7 @@ if ( ! class_exists( 'BSF_Analytics' ) ) {
 									</div>
 								</div>',
 							/* translators: %s usage doc link */
-							sprintf( $notice_string . '<span dir="%1s"> <a href="%2s" target="_blank" rel="noreferrer noopener">%3s</a><span><br><br>', $language_dir, esc_url( $usage_doc_link ), __( 'Learn more.' ) ),
+							sprintf( $notice_string . '<span dir="%1s"> <a href="%2s" target="_blank" rel="noreferrer noopener">%3s</a><span><br><br>', $language_dir, esc_url( $usage_doc_link ), __( 'Learn more.', 'woo-cart-abandonment-recovery' ) ),
 							esc_url(
 								add_query_arg(
 									array(
@@ -308,7 +307,7 @@ if ( ! class_exists( 'BSF_Analytics' ) ) {
 									)
 								)
 							),
-							__( 'Sure, count me in!' ),
+							__( 'Sure, count me in!', 'woo-cart-abandonment-recovery' ),
 							esc_url(
 								add_query_arg(
 									array(
@@ -319,7 +318,7 @@ if ( ! class_exists( 'BSF_Analytics' ) ) {
 								)
 							),
 							MONTH_IN_SECONDS,
-							__( 'No, thanks' )
+							__( 'No, thanks', 'woo-cart-abandonment-recovery' )
 						),
 						'show_if'                    => true,
 						'repeat-notice-after'        => false,
@@ -497,7 +496,7 @@ if ( ! class_exists( 'BSF_Analytics' ) ) {
 
 				add_settings_field(
 					$key . '-usage-optin',       // Field ID.
-					__( 'Usage Tracking' ),       // Field title.
+					__( 'Usage Tracking', 'woo-cart-abandonment-recovery' ),       // Field title.
 					array( $this, 'render_settings_field_html' ), // Field callback function.
 					'general',
 					'default',                   // Settings page slug.
@@ -542,15 +541,15 @@ if ( ! class_exists( 'BSF_Analytics' ) ) {
 				<input id="<?php echo esc_attr( $args['id'] ); ?>" type="checkbox" value="1" name="<?php echo esc_attr( $args['name'] ); ?>" <?php checked( $is_checked ); ?>>
 				<?php
 				/* translators: %s Product title */
-				echo esc_html( sprintf( __( 'Help improve %s by sharing non-sensitive usage data — like PHP version and features used.' ), $args['title'] ) );// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralText
+				echo esc_html( sprintf( __( 'Help improve %s by sharing non-sensitive usage data — like PHP version and features used.', 'woo-cart-abandonment-recovery' ), $args['title'] ) );// phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralText
 
 				if ( is_multisite() ) {
-					esc_html_e( ' This will be applicable for all sites from the network.' );
+					esc_html_e( ' This will be applicable for all sites from the network.', 'woo-cart-abandonment-recovery' );
 				}
 				?>
 			</label>
 			<?php
-			echo wp_kses_post( sprintf( '<a href="%1s" target="_blank" rel="noreferrer noopener">%2s</a>', esc_url( $args['usage_doc_link'] ), __( 'Learn More.' ) ) );
+			echo wp_kses_post( sprintf( '<a href="%1s" target="_blank" rel="noreferrer noopener">%2s</a>', esc_url( $args['usage_doc_link'] ), __( 'Learn More.', 'woo-cart-abandonment-recovery' ) ) );
 			?>
 			</fieldset>
 			<?php

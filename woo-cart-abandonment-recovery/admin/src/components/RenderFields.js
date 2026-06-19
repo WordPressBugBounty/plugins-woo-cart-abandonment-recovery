@@ -95,6 +95,7 @@ const RenderFields = ( {
 					description={ data.desc }
 					name={ data.name }
 					value={ value }
+					placeholder={ data?.placeholder || '' }
 					isPro={ data?.is_pro }
 					proUpgradeMessage={ data?.pro_upgrade_message }
 					{ ...( handleChange && { handleChange } ) }

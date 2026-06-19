@@ -3,7 +3,7 @@ Contributors: sujaypawar, wpcrafter
 Tags: woocommerce, cart abandonment, cart recovery
 Requires at least: 5.4
 Tested up to: 6.9
-Stable tag: 2.1.2
+Stable tag: 2.1.3
 Requires PHP: 7.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -163,6 +163,11 @@ You can report the issue through our [Bug Bounty Program](https://brainstormforc
 4. General settings for Email, Webhook (Coupon Code), GDPR
 
 == Changelog ==
+
+= Version 2.1.3 - Friday, 19th June 2026 =
+- New: Added a per-template option to send the admin a CC or BCC copy of each recovery email.
+- Fix: Fixed an issue where false Admin Recovery Notification emails were sent for normal orders placed by users with custom roles.
+- Fix: Fixed an issue causing Recovered Revenue reporting to be inflated due to email-only matching and outdated cart totals.
 
 = Version 2.1.2 - Thursday, 4th June 2026 =
 - New: Added per-template product table customization for email follow-ups.

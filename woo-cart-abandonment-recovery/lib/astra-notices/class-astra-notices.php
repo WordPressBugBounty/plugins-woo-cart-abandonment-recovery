@@ -147,7 +147,7 @@ if ( ! class_exists( 'Astra_Notices' ) ) :
 			if ( ! empty( $notice_id ) ) {
 
 				if ( in_array( $notice_id, $wp_default_meta_keys, true ) ) {
-					wp_send_json_error( esc_html__( 'Invalid notice ID.', 'astra-notices' ) );
+					wp_send_json_error( esc_html__( 'Invalid notice ID.', 'woo-cart-abandonment-recovery' ) );
 				}
 
 				if ( ! empty( $repeat_notice_after ) ) {

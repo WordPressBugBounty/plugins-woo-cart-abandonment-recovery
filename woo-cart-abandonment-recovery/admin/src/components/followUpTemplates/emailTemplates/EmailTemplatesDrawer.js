@@ -39,6 +39,9 @@ const EmailTemplatesDrawer = ( { open, setOpen, template, onSave } ) => {
 		product_image_size: 'medium',
 		show_prices_with_tax: false,
 		visible_columns: [ 'image', 'name', 'quantity', 'price', 'subtotal' ],
+		admin_email_copy_status: false,
+		admin_email_copy_type: 'bcc',
+		admin_email_copy_address: '',
 		enable_email_rule_engine: false,
 		email_rule_engine: [],
 		exclude_product_ids: [],
@@ -108,6 +111,9 @@ const EmailTemplatesDrawer = ( { open, setOpen, template, onSave } ) => {
 					'price',
 					'subtotal',
 				],
+				admin_email_copy_status: false,
+				admin_email_copy_type: 'bcc',
+				admin_email_copy_address: '',
 				enable_email_rule_engine: false,
 				email_rule_engine: [],
 				exclude_product_ids: [],
@@ -283,6 +289,18 @@ const EmailTemplatesDrawer = ( { open, setOpen, template, onSave } ) => {
 			Array.isArray( formState.visible_columns )
 				? formState.visible_columns.join( ',' )
 				: formState.visible_columns || ''
+		);
+		formData.append(
+			'wcf_admin_email_copy_status',
+			formState.admin_email_copy_status ? '1' : ''
+		);
+		formData.append(
+			'wcf_admin_email_copy_type',
+			formState.admin_email_copy_type || 'bcc'
+		);
+		formData.append(
+			'wcf_admin_email_copy_address',
+			formState.admin_email_copy_address || ''
 		);
 
 		// Add rule engine fields

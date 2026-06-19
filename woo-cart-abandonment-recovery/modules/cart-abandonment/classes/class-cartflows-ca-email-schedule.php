@@ -180,7 +180,23 @@ class Cartflows_Ca_Email_Schedule {
 			$headers  = 'From: ' . $from_email_name . ' <' . $from_email_preview . '>' . "\r\n";
 			$headers .= 'Content-Type: text/html' . "\r\n";
 			$headers .= 'Reply-To:  ' . $reply_name_preview . ' ' . "\r\n";
-			$var      = $this->get_email_product_block( $email_data->cart_contents, $email_data->cart_total, isset( $email_data->email_template_id ) ? (int) $email_data->email_template_id : 0 );
+
+			if ( ! $preview_email ) {
+				$headers .= $this->get_admin_copy_header( isset( $email_data->email_template_id ) ? (int) $email_data->email_template_id : 0 );
+			}
+
+			/**
+			 * Filter to modify email headers before sending.
+			 *
+			 * @param string $headers Email headers.
+			 * @param object $email_data Email data object.
+			 * @param bool   $preview_email Whether this is a preview email.
+			 * @return string Modified email headers.
+			 * @since 2.1.3
+			 */
+			$headers = apply_filters( 'cartflows_ca_email_headers', $headers, $email_data, $preview_email );
+
+			$var = $this->get_email_product_block( $email_data->cart_contents, $email_data->cart_total, isset( $email_data->email_template_id ) ? (int) $email_data->email_template_id : 0 );
 
 			$body_email_preview = str_replace( '{{cart.product.table}}', $var, $body_email_preview );
 			$body_email_preview = wpautop( $body_email_preview );
@@ -730,6 +746,44 @@ class Cartflows_Ca_Email_Schedule {
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Build the Cc/Bcc header that copies recovery emails to the admin.
+	 *
+	 * Returns an empty string when the copy option is disabled for the
+	 * template or no valid address is available. Falls back to the site
+	 * admin email when the address field is empty or invalid.
+	 *
+	 * @param int $template_id Email template ID.
+	 * @return string Header line with trailing CRLF or empty string.
+	 * @since 2.1.3
+	 */
+	private function get_admin_copy_header( $template_id ) {
+		$email_instance = Cartflows_Ca_Email_Templates::get_instance();
+
+		$status = $email_instance->get_email_template_meta_by_key( $template_id, 'admin_email_copy_status' );
+		if ( empty( $status ) || empty( $status->meta_value ) ) {
+			return '';
+		}
+
+		$address = $email_instance->get_email_template_meta_by_key( $template_id, 'admin_email_copy_address' );
+		$raw     = ! empty( $address ) && ! empty( $address->meta_value ) ? $address->meta_value : get_option( 'admin_email' );
+
+		$valid = array_filter( array_map( 'trim', explode( ',', $raw ) ), 'is_email' );
+
+		if ( empty( $valid ) && is_email( get_option( 'admin_email' ) ) ) {
+			$valid[] = get_option( 'admin_email' );
+		}
+
+		if ( empty( $valid ) ) {
+			return '';
+		}
+
+		$type   = $email_instance->get_email_template_meta_by_key( $template_id, 'admin_email_copy_type' );
+		$prefix = ! empty( $type ) && 'cc' === $type->meta_value ? 'Cc' : 'Bcc';
+
+		return $prefix . ': ' . implode( ', ', $valid ) . "\r\n";
 	}
 
 	/**
