@@ -198,6 +198,13 @@ class Cartflows_Ca_Tracking {
 
 			$order = wc_get_order( $order_id );
 
+			// An order recovers at most one row. A later move between accepted
+			// statuses (processing -> completed) would otherwise credit the same
+			// order to another of the buyer's open rows.
+			if ( $this->is_order_already_recovered( $order ) ) {
+				return;
+			}
+
 			$order_email   = $order->get_billing_email();
 			$captured_data = WCF_CART_FAILED_ORDER === $new_order_status ? $this->get_tracked_data_without_status( $order_email ) : $this->get_captured_data_by_email( $order_email );
 
@@ -215,8 +222,21 @@ class Cartflows_Ca_Tracking {
 					$this->trigger_zapier_webhook( $captured_data->session_id, WCF_CART_COMPLETED_ORDER );
 					$note = __( 'This order was abandoned & subsequently recovered.', 'woo-cart-abandonment-recovery' );
 					$order->add_order_note( $note );
+					$order->update_meta_data( '_cartflows_ca_recovered', 'yes' );
 					$order->save();
 					if ( WC()->session ) {
+						// The buyer's own in-progress row from this session is superseded by the recovered one.
+						$current_session_id = WC()->session->get( 'wcf_session_id' );
+						if ( $current_session_id && $current_session_id !== $captured_data->session_id ) {
+							$wpdb->delete(
+								$cart_abandonment_table,
+								[
+									'session_id'   => sanitize_key( $current_session_id ),
+									'order_status' => WCF_CART_NORMAL_ORDER,
+									'email'        => $order_email,
+								]
+							); // db call ok; no cache ok.
+						}
 						WC()->session->__unset( 'wcf_session_id' );
 					}
 
@@ -781,7 +801,8 @@ class Cartflows_Ca_Tracking {
 			if ( isset( $session_id ) ) {
 				$session_checkout_details = Cartflows_Ca_Helper::get_instance()->get_checkout_details( $session_id );
 			} else {
-				$session_checkout_details = $this->get_checkout_details_by_email( $user_email );
+				// Only adopt an existing row when the visitor has proven they own the email.
+				$session_checkout_details = $this->get_owned_checkout_details_by_email( $user_email );
 				if ( $session_checkout_details ) {
 					$session_id = $session_checkout_details->session_id;
 					WC()->session->set( 'wcf_session_id', $session_id );
@@ -932,6 +953,7 @@ class Cartflows_Ca_Tracking {
 						$order = wc_get_order( $order_id );
 						$note  = __( 'This order was abandoned & subsequently recovered.', 'woo-cart-abandonment-recovery' );
 						$order->add_order_note( $note );
+						$order->update_meta_data( '_cartflows_ca_recovered', 'yes' );
 						$order->save();
 
 					} elseif ( WCF_CART_COMPLETED_ORDER !== $checkout_details->order_status ) {
@@ -949,6 +971,8 @@ class Cartflows_Ca_Tracking {
 								$order_cart_products    = array_keys( (array) $order_cart_contents );
 								if ( $this->check_if_similar_cart( $existing_cart_products, $order_cart_products ) ) {
 									$this->skip_future_emails_when_order_is_completed( $order_data->session_id, false, $order_id );
+									$order->update_meta_data( '_cartflows_ca_recovered', 'yes' );
+									$order->save();
 								}
 							}
 						}
@@ -1058,6 +1082,59 @@ class Cartflows_Ca_Tracking {
 		return $wpdb->get_row(
 			$wpdb->prepare( "SELECT * FROM {$cart_abandonment_table} WHERE email = %s AND `order_status` IN ( %s, %s )", $email, WCF_CART_ABANDONED_ORDER, WCF_CART_NORMAL_ORDER ) //phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		);
+	}
+
+	/**
+	 * Whether this order has already recovered an abandonment row.
+	 *
+	 * Every recovery path flags the order, so a later status change can tell it
+	 * has already been credited.
+	 *
+	 * @param WC_Order $order Order.
+	 * @since 2.1.4
+	 * @return bool
+	 */
+	private function is_order_already_recovered( $order ) {
+		return 'yes' === $order->get_meta( '_cartflows_ca_recovered' );
+	}
+
+	/**
+	 * Get the checkout details for an email only when the current visitor owns it.
+	 *
+	 * A submitted email is not proof of ownership, so guests never adopt an
+	 * existing row. Logged-in users may resume a row matching their account email,
+	 * but only one saved after the account was registered: WooCommerce does not
+	 * verify emails, so an account created with someone else's address must not
+	 * inherit the row that person was already building as a guest.
+	 *
+	 * @param string $email user email.
+	 * @since 2.1.4
+	 * @return object|null
+	 */
+	private function get_owned_checkout_details_by_email( $email ) {
+		if ( ! is_user_logged_in() || empty( $email ) ) {
+			return null;
+		}
+
+		$user = wp_get_current_user();
+		if ( empty( $user->user_email ) || 0 !== strcasecmp( $user->user_email, $email ) ) {
+			return null;
+		}
+
+		$row = $this->get_checkout_details_by_email( $email );
+		if ( ! $row || empty( $user->user_registered ) ) {
+			return null;
+		}
+
+		// Row `time` is site-local; `user_registered` is GMT. A missing or invalid
+		// date on either side means ownership can't be shown, so don't adopt.
+		$registered = strtotime( get_date_from_gmt( $user->user_registered, WCF_CA_DATETIME_FORMAT ) );
+		$row_time   = empty( $row->time ) ? false : strtotime( $row->time );
+		if ( ! $registered || $registered <= 0 || ! $row_time || $row_time < $registered ) {
+			return null;
+		}
+
+		return $row;
 	}
 
 	/**
