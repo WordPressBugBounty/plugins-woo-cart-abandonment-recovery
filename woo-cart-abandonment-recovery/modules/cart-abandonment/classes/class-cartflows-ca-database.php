@@ -41,6 +41,7 @@ class Cartflows_Ca_Database {
 		$this->create_cart_abandonment_template_table();
 		$this->create_email_templates_meta_table();
 		$this->create_email_history_table();
+		$this->create_oos_notifications_table();
 		$this->check_if_all_table_created();
 	}
 
@@ -56,6 +57,7 @@ class Cartflows_Ca_Database {
 			CARTFLOWS_CA_EMAIL_TEMPLATE_TABLE,
 			CARTFLOWS_CA_EMAIL_HISTORY_TABLE,
 			CARTFLOWS_CA_EMAIL_TEMPLATE_META_TABLE,
+			CARTFLOWS_CA_OUT_OF_STOCK_NOTIFICATIONS_TABLE,
 		];
 
 		delete_option( 'wcf_ca_all_db_tables_created' );
@@ -109,7 +111,7 @@ class Cartflows_Ca_Database {
 		// Cart abandonment tracking db sql command.
 		$sql = "CREATE TABLE IF NOT EXISTS {$cart_abandonment_db} (
 			id BIGINT(20) NOT NULL AUTO_INCREMENT,
-			checkout_id int(11) NOT NULL,
+			checkout_id BIGINT(20) UNSIGNED NOT NULL,
 			email VARCHAR(100),
 			cart_contents LONGTEXT,
 			cart_total DECIMAL(10,2),
@@ -180,6 +182,46 @@ class Cartflows_Ca_Database {
 			 `email_sent` boolean DEFAULT 0,
 			  PRIMARY KEY (`id`),
 			  FOREIGN KEY ( `template_id` )  REFERENCES {$cart_abandonment_template_db}(`id`) ON DELETE CASCADE,
+			  FOREIGN KEY ( `ca_session_id` )  REFERENCES {$cart_abandonment_db}(`session_id`) ON DELETE CASCADE
+		) {$charset_collate};\n";
+
+		include_once ABSPATH . 'wp-admin/includes/upgrade.php';
+		dbDelta( $sql );
+	}
+
+	/**
+	 * Create the out-of-stock (OOS) notification de-duplication table.
+	 *
+	 * Stores cart/product pairs that have already triggered an admin stock alert,
+	 * ensuring each abandoned-cart product generates only one notification.
+	 *
+	 * A dedicated table provides database-level deduplication via a UNIQUE KEY,
+	 * automatic cleanup through FK CASCADE, efficient row-based storage, and
+	 * isolation from cart tracking data.
+	 *
+	 * Follows the existing email_history child-table pattern.
+	 *
+	 * @since 2.2.0
+	 */
+	public function create_oos_notifications_table(): void {
+
+		global $wpdb;
+
+		$wpdb->hide_errors();
+
+		$oos_notifications_db = $wpdb->prefix . CARTFLOWS_CA_OUT_OF_STOCK_NOTIFICATIONS_TABLE;
+		$cart_abandonment_db  = $wpdb->prefix . CARTFLOWS_CA_CART_ABANDONMENT_TABLE;
+
+		$charset_collate = $wpdb->get_charset_collate();
+
+		// UNIQUE (ca_session_id, product_id) enforces "once per cart per product"; FK CASCADE auto-cleans rows when the parent cart is removed.
+		$sql = "CREATE TABLE IF NOT EXISTS {$oos_notifications_db} (
+			 `id` BIGINT(20) NOT NULL AUTO_INCREMENT,
+			 `ca_session_id` VARCHAR(60) NOT NULL,
+			 `product_id` BIGINT(20) NOT NULL,
+			 `notified_time` DATETIME DEFAULT NULL,
+			  PRIMARY KEY (`id`),
+			  UNIQUE KEY `session_product` (`ca_session_id`, `product_id`),
 			  FOREIGN KEY ( `ca_session_id` )  REFERENCES {$cart_abandonment_db}(`session_id`) ON DELETE CASCADE
 		) {$charset_collate};\n";
 

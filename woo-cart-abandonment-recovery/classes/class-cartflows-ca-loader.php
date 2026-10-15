@@ -96,9 +96,9 @@ if ( ! class_exists( 'CARTFLOWS_CA_Loader' ) ) {
 			define( 'CARTFLOWS_CA_BASE', plugin_basename( CARTFLOWS_CA_FILE ) );
 			define( 'CARTFLOWS_CA_DIR', plugin_dir_path( CARTFLOWS_CA_FILE ) );
 			define( 'CARTFLOWS_CA_URL', plugins_url( '/', CARTFLOWS_CA_FILE ) );
-			define( 'CARTFLOWS_CA_VER', '2.1.4' );
-			define( 'CARTFLOWS_CA_DB_VER', '1.1.0' );
-			define( 'CARTFLOWS_CA_REQ_PRO_VER', '1.2.0' );
+			define( 'CARTFLOWS_CA_VER', '2.2.0' );
+			define( 'CARTFLOWS_CA_DB_VER', '1.2.0' );
+			define( 'CARTFLOWS_CA_REQ_PRO_VER', '1.3.0' );
 
 			define( 'CARTFLOWS_CA_SLUG', 'cartflows_ca' );
 
@@ -106,6 +106,7 @@ if ( ! class_exists( 'CARTFLOWS_CA_Loader' ) ) {
 			define( 'CARTFLOWS_CA_EMAIL_TEMPLATE_TABLE', 'cartflows_ca_email_templates' );
 			define( 'CARTFLOWS_CA_EMAIL_HISTORY_TABLE', 'cartflows_ca_email_history' );
 			define( 'CARTFLOWS_CA_EMAIL_TEMPLATE_META_TABLE', 'cartflows_ca_email_templates_meta' );
+			define( 'CARTFLOWS_CA_OUT_OF_STOCK_NOTIFICATIONS_TABLE', 'cartflows_ca_out_of_stock_notifications' );
 
 			define( 'CARTFLOWS_CA_DOMAIN_URL', 'https://cartflows.com/' );
 			define( 'CARTFLOWS_CA_NPS_WEBHOOK_URL', 'https://webhook.ottokit.com/ottokit/c883bcf8-1f86-4a16-9b81-7fd4cfaa3a49' );
@@ -410,6 +411,8 @@ if ( ! class_exists( 'CARTFLOWS_CA_Loader' ) ) {
 			include_once CARTFLOWS_CA_DIR . 'modules/cart-abandonment/classes/class-cartflows-ca-module-loader.php';
 
 			include_once CARTFLOWS_CA_DIR . 'modules/weekly-email-report/class-cartflows-ca-admin-report-emails.php';
+
+			include_once CARTFLOWS_CA_DIR . 'modules/oos-warning/class-cartflows-ca-oos-warning.php';
 		}
 
 		/**
@@ -495,6 +498,13 @@ if ( ! class_exists( 'CARTFLOWS_CA_Loader' ) ) {
 		 */
 		public function deactivation_reset(): void {
 			wp_clear_scheduled_hook( 'cartflows_ca_update_order_status_action' );
+
+			// Cancel the recurring order-status job, out-of-stock re-scan and any pending scan chunks (Action Scheduler) on deactivation.
+			if ( function_exists( 'as_unschedule_all_actions' ) ) {
+				as_unschedule_all_actions( 'cartflows_ca_update_order_status_action' );
+				as_unschedule_all_actions( 'cartflows_ca_check_oos_abandoned_products' );
+				as_unschedule_all_actions( 'cartflows_ca_process_oos_batch' );
+			}
 		}
 
 		/**

@@ -257,6 +257,20 @@ class Cartflows_Ca_Tracking {
 		$unsubscribe  = filter_input( INPUT_GET, 'unsubscribe', FILTER_VALIDATE_BOOLEAN );
 		$wcf_ac_token = Cartflows_Ca_Helper::get_instance()->sanitize_text_filter( 'wcf_ac_token', 'GET' );
 
+		if ( $unsubscribe && ! empty( $wcf_ac_token ) ) {
+			// Preview/test emails link to a placeholder cart that doesn't exist, so show
+			// what the customer would see without touching any row.
+			$token_data = $this->wcf_decode_token( $wcf_ac_token );
+			if ( is_array( $token_data ) && isset( $token_data['wcf_preview_email'] ) && '1' === (string) $token_data['wcf_preview_email'] ) {
+				$unsubscribe_notice = apply_filters(
+					'woo_ca_recovery_email_unsubscribe_notice',
+					__( 'You have successfully unsubscribed from our email list.', 'woo-cart-abandonment-recovery' )
+				);
+
+				wp_die( esc_html( $unsubscribe_notice ), esc_html__( 'Unsubscribed', 'woo-cart-abandonment-recovery' ), [ 'response' => 200 ] );
+			}
+		}
+
 		if ( $unsubscribe && $this->is_valid_token( $wcf_ac_token ) ) {
 			$token_data = $this->wcf_decode_token( $wcf_ac_token );
 			if ( isset( $token_data['wcf_session_id'] ) ) {
@@ -277,8 +291,16 @@ class Cartflows_Ca_Tracking {
 					__( 'You have successfully unsubscribed from our email list.', 'woo-cart-abandonment-recovery' )
 				);
 
-				wp_die( esc_html( $unsubscribe_notice ), esc_html__( 'Unsubscribed', 'woo-cart-abandonment-recovery' ) );
+				wp_die( esc_html( $unsubscribe_notice ), esc_html__( 'Unsubscribed', 'woo-cart-abandonment-recovery' ), [ 'response' => 200 ] );
 			}
+		} elseif ( $unsubscribe && ! empty( $wcf_ac_token ) ) {
+			// Unsigned links (emails sent before v2.1.1), tampered links, or a cart that no longer exists.
+			$invalid_notice = apply_filters(
+				'woo_ca_recovery_email_unsubscribe_invalid_notice',
+				__( 'This unsubscribe link is no longer valid. If you still receive cart reminder emails, please use the unsubscribe link in the most recent one.', 'woo-cart-abandonment-recovery' )
+			);
+
+			wp_die( esc_html( $invalid_notice ), esc_html__( 'Link expired', 'woo-cart-abandonment-recovery' ), [ 'response' => 200 ] );
 		}
 	}
 
@@ -347,6 +369,9 @@ class Cartflows_Ca_Tracking {
 				}
 
 				foreach ( $other_fields as $key => $value ) {
+					if ( 'wcf_ca_owner_id' === $key ) {
+						continue;
+					}
 					$key           = str_replace( 'wcf_', '', $key );
 					$_POST[ $key ] = sanitize_text_field( $value );
 				}
@@ -637,7 +662,7 @@ class Cartflows_Ca_Tracking {
 			$trigger_details['coupon_code']      = $checkout_details->coupon_code;
 			$trigger_details['order_status']     = $order_status;
 			$trigger_details['cart_total']       = $checkout_details->cart_total;
-			$trigger_details['product_table']    = Cartflows_Ca_Email_Schedule::get_instance()->get_email_product_block( $checkout_details->cart_contents, $checkout_details->cart_total, isset( $checkout_details->email_template_id ) ? (int) $checkout_details->email_template_id : 0 );
+			$trigger_details['product_table']    = Cartflows_Ca_Email_Schedule::get_instance()->get_email_product_block( $checkout_details->cart_contents, $checkout_details->cart_total, isset( $checkout_details->email_template_id ) ? (int) $checkout_details->email_template_id : 0, 'webhook' );
 
 			$trigger_details = apply_filters( 'woo_ca_webhook_trigger_details', $trigger_details );
 
@@ -800,6 +825,11 @@ class Cartflows_Ca_Tracking {
 			$session_checkout_details = null;
 			if ( isset( $session_id ) ) {
 				$session_checkout_details = Cartflows_Ca_Helper::get_instance()->get_checkout_details( $session_id );
+				if ( ! $session_checkout_details ) {
+					// The bound row is gone, possibly deleted by another session sharing it
+					// through a recovery link. Start a new row rather than recreate that one.
+					$session_id = md5( uniqid( wp_rand(), true ) );
+				}
 			} else {
 				// Only adopt an existing row when the visitor has proven they own the email.
 				$session_checkout_details = $this->get_owned_checkout_details_by_email( $user_email );
@@ -818,6 +848,8 @@ class Cartflows_Ca_Tracking {
 				$session_id               = md5( uniqid( wp_rand(), true ) );
 				$session_checkout_details = null;
 			}
+
+			$checkout_details = $this->apply_row_owner( $checkout_details, $session_checkout_details );
 
 			if ( isset( $checkout_details['cart_total'] ) && $checkout_details['cart_total'] > 0 ) {
 
@@ -841,6 +873,7 @@ class Cartflows_Ca_Tracking {
 
 					// Storing session_id in WooCommerce session.
 					WC()->session->set( 'wcf_session_id', $session_id );
+					$this->remember_created_row( $session_id );
 
 				}
 			} else {
@@ -1073,15 +1106,15 @@ class Cartflows_Ca_Tracking {
 	/**
 	 * Get the checkout details for the user.
 	 *
+	 * Applies the same ownership rule as get_owned_checkout_details_by_email(),
+	 * so older callers can't resume a row the current visitor doesn't own.
+	 *
 	 * @param string $email user email.
 	 * @since 1.0.0
+	 * @return object|null
 	 */
 	public function get_checkout_details_by_email( $email ) {
-		global $wpdb;
-		$cart_abandonment_table = $wpdb->prefix . CARTFLOWS_CA_CART_ABANDONMENT_TABLE;
-		return $wpdb->get_row(
-			$wpdb->prepare( "SELECT * FROM {$cart_abandonment_table} WHERE email = %s AND `order_status` IN ( %s, %s )", $email, WCF_CART_ABANDONED_ORDER, WCF_CART_NORMAL_ORDER ) //phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		);
+		return $this->get_owned_checkout_details_by_email( $email );
 	}
 
 	/**
@@ -1102,16 +1135,18 @@ class Cartflows_Ca_Tracking {
 	 * Get the checkout details for an email only when the current visitor owns it.
 	 *
 	 * A submitted email is not proof of ownership, so guests never adopt an
-	 * existing row. Logged-in users may resume a row matching their account email,
-	 * but only one saved after the account was registered: WooCommerce does not
-	 * verify emails, so an account created with someone else's address must not
-	 * inherit the row that person was already building as a guest.
+	 * existing row. A logged-in user may resume only a row their account owns
+	 * (see apply_row_owner()): a row created by a guest elsewhere could have been
+	 * seeded by someone else, and WooCommerce does not verify account emails.
+	 *
+	 * Public so the Pro popup and banner apply the same rule.
 	 *
 	 * @param string $email user email.
 	 * @since 2.1.4
+	 * @since 2.2.0 Public; matches rows by owner instead of registration date.
 	 * @return object|null
 	 */
-	private function get_owned_checkout_details_by_email( $email ) {
+	public function get_owned_checkout_details_by_email( $email ) {
 		if ( ! is_user_logged_in() || empty( $email ) ) {
 			return null;
 		}
@@ -1121,20 +1156,110 @@ class Cartflows_Ca_Tracking {
 			return null;
 		}
 
-		$row = $this->get_checkout_details_by_email( $email );
-		if ( ! $row || empty( $user->user_registered ) ) {
+		global $wpdb;
+		$cart_abandonment_table = $wpdb->prefix . CARTFLOWS_CA_CART_ABANDONMENT_TABLE;
+
+		// apply_row_owner() stores the owner as the last int entry, so the stored value
+		// ends with this marker. Any code that writes other_fields must pass the row
+		// through apply_row_owner(), or the owner is lost. Anchoring to the end stops
+		// a text field that contains the marker from matching, since a string entry
+		// always ends with '";', and the owner is verified again below.
+		// Compared as binary so the column's case-insensitive collation can't match
+		// a differently cased key.
+		$owner_marker = 's:15:"wcf_ca_owner_id";i:' . (int) $user->ID . ';}';
+
+		$row = $wpdb->get_row( // db call ok; no cache ok.
+			$wpdb->prepare(
+				"SELECT * FROM {$cart_abandonment_table} WHERE email = %s AND `order_status` IN ( %s, %s ) AND CAST( other_fields AS BINARY ) LIKE %s ORDER BY `time` DESC LIMIT 1", //phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$email,
+				WCF_CART_ABANDONED_ORDER,
+				WCF_CART_NORMAL_ORDER,
+				'%' . $wpdb->esc_like( $owner_marker )
+			)
+		);
+
+		if ( ! $row ) {
 			return null;
 		}
 
-		// Row `time` is site-local; `user_registered` is GMT. A missing or invalid
-		// date on either side means ownership can't be shown, so don't adopt.
-		$registered = strtotime( get_date_from_gmt( $user->user_registered, WCF_CA_DATETIME_FORMAT ) );
-		$row_time   = empty( $row->time ) ? false : strtotime( $row->time );
-		if ( ! $registered || $registered <= 0 || ! $row_time || $row_time < $registered ) {
+		$other_fields = Cartflows_Ca_Helper::get_instance()->wcar_safe_unserialize( $row->other_fields );
+		if ( ! is_array( $other_fields ) || ! isset( $other_fields['wcf_ca_owner_id'] ) || (int) $other_fields['wcf_ca_owner_id'] !== (int) $user->ID ) {
 			return null;
 		}
 
 		return $row;
+	}
+
+	/**
+	 * Record which account owns a row, keeping the first owner.
+	 *
+	 * Set after the other_fields filters so a callback can't drop or forge it.
+	 * The owner is only set when the logged-in account email matches the row
+	 * email, so opening someone else's recovery link (e.g. an admin from the
+	 * report) doesn't claim their row, and later saves never clear it.
+	 *
+	 * An existing row without an owner is only claimed when this session created
+	 * it (see remember_created_row()), e.g. a guest who then logs in on the same
+	 * device. A row reached through a recovery link may have been created by
+	 * someone else who still shares it, so it is never claimed.
+	 *
+	 * @param array       $checkout_details Prepared row data.
+	 * @param object|null $existing_row     Row being updated, or null on insert.
+	 * @since 2.2.0
+	 * @return array
+	 */
+	public function apply_row_owner( $checkout_details, $existing_row = null ) {
+		if ( ! is_array( $checkout_details ) || ! isset( $checkout_details['other_fields'] ) ) {
+			return $checkout_details;
+		}
+
+		$ca_helper    = Cartflows_Ca_Helper::get_instance();
+		$other_fields = $ca_helper->wcar_safe_unserialize( $checkout_details['other_fields'] );
+		if ( ! is_array( $other_fields ) ) {
+			return $checkout_details;
+		}
+		unset( $other_fields['wcf_ca_owner_id'] );
+
+		$owner_id  = 0;
+		$can_claim = ! $existing_row;
+		if ( $existing_row ) {
+			$existing_fields = isset( $existing_row->other_fields ) ? $ca_helper->wcar_safe_unserialize( $existing_row->other_fields ) : [];
+			if ( is_array( $existing_fields ) && ! empty( $existing_fields['wcf_ca_owner_id'] ) ) {
+				$owner_id = (int) $existing_fields['wcf_ca_owner_id'];
+			}
+
+			$created_row = WC()->session ? WC()->session->get( 'wcf_ca_created_session_id' ) : '';
+			$can_claim   = ! empty( $existing_row->session_id ) && is_string( $created_row ) && $created_row === $existing_row->session_id;
+		}
+
+		if ( ! $owner_id && $can_claim && is_user_logged_in() ) {
+			$user  = wp_get_current_user();
+			$email = isset( $checkout_details['email'] ) ? (string) $checkout_details['email'] : '';
+			if ( ! empty( $user->user_email ) && '' !== $email && 0 === strcasecmp( $user->user_email, $email ) ) {
+				$owner_id = (int) $user->ID;
+			}
+		}
+
+		if ( $owner_id ) {
+			$other_fields['wcf_ca_owner_id'] = $owner_id;
+		}
+
+		$checkout_details['other_fields'] = maybe_serialize( $other_fields );
+		return $checkout_details;
+	}
+
+	/**
+	 * Remember that the current session created a row, so apply_row_owner() may
+	 * claim it if the visitor logs in later. Call right after inserting a row.
+	 *
+	 * @param string $session_id Session id of the inserted row.
+	 * @since 2.2.0
+	 * @return void
+	 */
+	public function remember_created_row( $session_id ): void {
+		if ( WC()->session && is_string( $session_id ) && '' !== $session_id ) {
+			WC()->session->set( 'wcf_ca_created_session_id', $session_id );
+		}
 	}
 
 	/**
@@ -1266,9 +1391,8 @@ class Cartflows_Ca_Tracking {
 	/**
 	 * Decode a recovery token and return the original data array.
 	 *
-	 * Supports two formats for backward compatibility:
-	 *  - New (signed): base64( payload '|' hmac_sha256(payload) ) — HMAC verified; rejected if tampered.
-	 *  - Legacy:       base64( payload ) — no signature; accepted to keep existing emails working.
+	 * Format: base64( payload '|' hmac_sha256(payload) ). The HMAC is verified;
+	 * tokens that are unsigned or tampered with are rejected.
 	 *
 	 * @param string $token token from URL.
 	 * @return array Decoded data, or empty array if the token is invalid/tampered.
@@ -1286,26 +1410,24 @@ class Cartflows_Ca_Tracking {
 			return [];
 		}
 
-		// New signed format: find the last '|' which separates payload from HMAC.
-		// http_build_query() never produces '|', so this is unambiguous.
+		// The last '|' separates the payload from its HMAC; http_build_query()
+		// never produces '|', so this is unambiguous. A token without a
+		// signature is rejected, so a session id can't be supplied unsigned.
 		$pipe_pos = strrpos( $decoded, '|' );
-		if ( false !== $pipe_pos ) {
-			$payload   = substr( $decoded, 0, $pipe_pos );
-			$signature = substr( $decoded, $pipe_pos + 1 );
-			$expected  = hash_hmac( 'sha256', $payload, wp_salt( 'auth' ) );
-
-			// Reject tampered tokens outright.
-			if ( ! hash_equals( $expected, $signature ) ) {
-				return [];
-			}
-
-			parse_str( $payload, $result );
-			return $result;
+		if ( false === $pipe_pos ) {
+			return [];
 		}
 
-		// Legacy format (no '|') — accepted during transition so existing
-		// recovery emails continue to work until they naturally expire.
-		parse_str( $decoded, $result );
+		$payload   = substr( $decoded, 0, $pipe_pos );
+		$signature = substr( $decoded, $pipe_pos + 1 );
+		$expected  = hash_hmac( 'sha256', $payload, wp_salt( 'auth' ) );
+
+		// Reject tampered tokens outright.
+		if ( ! hash_equals( $expected, $signature ) ) {
+			return [];
+		}
+
+		parse_str( $payload, $result );
 		return $result;
 	}
 
