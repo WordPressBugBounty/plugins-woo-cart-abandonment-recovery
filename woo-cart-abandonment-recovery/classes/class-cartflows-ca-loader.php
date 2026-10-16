@@ -96,7 +96,7 @@ if ( ! class_exists( 'CARTFLOWS_CA_Loader' ) ) {
 			define( 'CARTFLOWS_CA_BASE', plugin_basename( CARTFLOWS_CA_FILE ) );
 			define( 'CARTFLOWS_CA_DIR', plugin_dir_path( CARTFLOWS_CA_FILE ) );
 			define( 'CARTFLOWS_CA_URL', plugins_url( '/', CARTFLOWS_CA_FILE ) );
-			define( 'CARTFLOWS_CA_VER', '2.2.0' );
+			define( 'CARTFLOWS_CA_VER', '2.2.1' );
 			define( 'CARTFLOWS_CA_DB_VER', '1.2.0' );
 			define( 'CARTFLOWS_CA_REQ_PRO_VER', '1.3.0' );
 
@@ -130,6 +130,10 @@ if ( ! class_exists( 'CARTFLOWS_CA_Loader' ) ) {
 			}
 
 			if ( 'no' === get_option( 'wcf_ca_all_db_tables_created', false ) ) {
+				$this->maybe_retry_table_creation();
+			}
+
+			if ( 'no' === get_option( 'wcf_ca_all_db_tables_created', false ) ) {
 				add_action( 'admin_notices', [ $this, 'fails_to_create_table' ] );
 				return;
 			}
@@ -146,6 +150,24 @@ if ( ! class_exists( 'CARTFLOWS_CA_Loader' ) ) {
 			 * @since 1.0.0
 			 */
 			do_action( 'cartflows_ca_init' );
+		}
+
+		/**
+		 * Retry table creation hourly from wp-admin, since the update routine never loads while the flag is set.
+		 *
+		 * @since 2.2.1
+		 *
+		 * @return void
+		 */
+		public function maybe_retry_table_creation(): void {
+
+			if ( ! is_admin() || get_transient( 'wcf_ca_table_creation_retry' ) ) {
+				return;
+			}
+
+			set_transient( 'wcf_ca_table_creation_retry', 1, HOUR_IN_SECONDS );
+
+			$this->initialize_cart_abandonment_tables();
 		}
 
 		/**
@@ -229,6 +251,9 @@ if ( ! class_exists( 'CARTFLOWS_CA_Loader' ) ) {
 		 * @return void
 		 */
 		public function initialize_cart_abandonment_tables(): void {
+
+			// The template seeder needs wcf_ca()->options, unset when called early from load_plugin().
+			$this->get_options_instance();
 
 			include_once CARTFLOWS_CA_DIR . 'modules/cart-abandonment/classes/class-cartflows-ca-database.php';
 			$db = Cartflows_Ca_Database::get_instance();

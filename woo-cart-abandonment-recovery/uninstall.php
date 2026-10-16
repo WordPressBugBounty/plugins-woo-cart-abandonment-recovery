@@ -46,6 +46,11 @@ if ( 'on' === $delete_data ) {
 		'wcf_ca_version',
 		'wcf_ca_send_recovery_report_emails_to_admin',
 		'wcf_ca_admin_email',
+		'wcf_ca_oos_table_version',
+		'_transient_wcf_ca_table_creation_retry',
+		'_transient_timeout_wcf_ca_table_creation_retry',
+		'_transient_wcf_ca_oos_table_retry',
+		'_transient_timeout_wcf_ca_oos_table_retry',
 	];
 
 	// Delete all options data.
@@ -57,6 +62,9 @@ if ( 'on' === $delete_data ) {
 	$wpdb->get_results( "DROP TABLE IF EXISTS {$wpdb->prefix}cartflows_ca_email_templates_meta" );
 
 	$wpdb->get_results( "DROP TABLE IF EXISTS {$wpdb->prefix}cartflows_ca_email_history" );
+
+	// Has a FOREIGN KEY on cart_abandonment, so drop it first.
+	$wpdb->get_results( "DROP TABLE IF EXISTS {$wpdb->prefix}cartflows_ca_out_of_stock_notifications" );
 
 	$wpdb->get_results( "DROP TABLE IF EXISTS {$wpdb->prefix}cartflows_ca_email_templates" );
 

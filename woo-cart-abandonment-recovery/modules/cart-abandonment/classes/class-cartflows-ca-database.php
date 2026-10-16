@@ -24,6 +24,13 @@ class Cartflows_Ca_Database {
 	private static $instance;
 
 	/**
+	 * Parent charset/collate clause, keyed by table name.
+	 *
+	 * @var array<string, string>
+	 */
+	private static $parent_charset_collate = [];
+
+	/**
 	 *  Initiator
 	 */
 	public static function get_instance() {
@@ -57,7 +64,6 @@ class Cartflows_Ca_Database {
 			CARTFLOWS_CA_EMAIL_TEMPLATE_TABLE,
 			CARTFLOWS_CA_EMAIL_HISTORY_TABLE,
 			CARTFLOWS_CA_EMAIL_TEMPLATE_META_TABLE,
-			CARTFLOWS_CA_OUT_OF_STOCK_NOTIFICATIONS_TABLE,
 		];
 
 		delete_option( 'wcf_ca_all_db_tables_created' );
@@ -212,21 +218,72 @@ class Cartflows_Ca_Database {
 		$oos_notifications_db = $wpdb->prefix . CARTFLOWS_CA_OUT_OF_STOCK_NOTIFICATIONS_TABLE;
 		$cart_abandonment_db  = $wpdb->prefix . CARTFLOWS_CA_CART_ABANDONMENT_TABLE;
 
-		$charset_collate = $wpdb->get_charset_collate();
+		// Load first: on its first include, schema.php overwrites $charset_collate with the site default.
+		include_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
-		// UNIQUE (ca_session_id, product_id) enforces "once per cart per product"; FK CASCADE auto-cleans rows when the parent cart is removed.
-		$sql = "CREATE TABLE IF NOT EXISTS {$oos_notifications_db} (
+		// Must match the parent column, or MySQL rejects the FOREIGN KEY on older installs.
+		$charset_collate = $this->get_parent_charset_collate();
+
+		$columns = '
 			 `id` BIGINT(20) NOT NULL AUTO_INCREMENT,
 			 `ca_session_id` VARCHAR(60) NOT NULL,
 			 `product_id` BIGINT(20) NOT NULL,
 			 `notified_time` DATETIME DEFAULT NULL,
 			  PRIMARY KEY (`id`),
-			  UNIQUE KEY `session_product` (`ca_session_id`, `product_id`),
-			  FOREIGN KEY ( `ca_session_id` )  REFERENCES {$cart_abandonment_db}(`session_id`) ON DELETE CASCADE
-		) {$charset_collate};\n";
+			  UNIQUE KEY `session_product` (`ca_session_id`, `product_id`)';
 
-		include_once ABSPATH . 'wp-admin/includes/upgrade.php';
-		dbDelta( $sql );
+		// UNIQUE (ca_session_id, product_id) enforces "once per cart per product"; FK CASCADE auto-cleans rows when the parent cart is removed.
+		dbDelta(
+			"CREATE TABLE IF NOT EXISTS {$oos_notifications_db} ({$columns},
+			  FOREIGN KEY ( `ca_session_id` )  REFERENCES {$cart_abandonment_db}(`session_id`) ON DELETE CASCADE
+		) {$charset_collate};\n"
+		);
+
+		if ( ! empty( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $oos_notifications_db ) ) ) ) { // db call ok; no-cache ok.
+			delete_transient( 'wcf_ca_oos_table_retry' );
+			return;
+		}
+
+		// FOREIGN KEY still refused (e.g. MyISAM parent): create the table without it.
+		dbDelta( "CREATE TABLE IF NOT EXISTS {$oos_notifications_db} ({$columns}\n\t\t) {$charset_collate};\n" );
+	}
+
+	/**
+	 * Charset/collate clause matching cart_abandonment.session_id, falling back to the site default.
+	 *
+	 * @since 2.2.1
+	 *
+	 * @return string
+	 */
+	public function get_parent_charset_collate(): string {
+		global $wpdb;
+
+		$cart_abandonment_db = $wpdb->prefix . CARTFLOWS_CA_CART_ABANDONMENT_TABLE;
+
+		if ( isset( self::$parent_charset_collate[ $cart_abandonment_db ] ) ) {
+			return self::$parent_charset_collate[ $cart_abandonment_db ];
+		}
+
+		$row = $wpdb->get_row( // db call ok; no-cache ok.
+			$wpdb->prepare(
+				"SELECT CHARACTER_SET_NAME, COLLATION_NAME
+				FROM INFORMATION_SCHEMA.COLUMNS
+				WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s AND COLUMN_NAME = 'session_id'",
+				$cart_abandonment_db
+			)
+		);
+
+		//phpcs:disable WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
+		if ( $row && ! empty( $row->CHARACTER_SET_NAME ) && ! empty( $row->COLLATION_NAME ) ) {
+			$charset = preg_replace( '/[^A-Za-z0-9_]/', '', (string) $row->CHARACTER_SET_NAME );
+			$collate = preg_replace( '/[^A-Za-z0-9_]/', '', (string) $row->COLLATION_NAME );
+
+			self::$parent_charset_collate[ $cart_abandonment_db ] = "DEFAULT CHARACTER SET {$charset} COLLATE {$collate}";
+			return self::$parent_charset_collate[ $cart_abandonment_db ];
+		}
+		//phpcs:enable WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
+
+		return $wpdb->get_charset_collate();
 	}
 
 	/**

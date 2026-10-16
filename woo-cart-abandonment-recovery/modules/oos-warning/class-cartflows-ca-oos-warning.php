@@ -117,6 +117,10 @@ class Cartflows_Ca_Oos_Warning {
 			return;
 		}
 
+		if ( get_transient( 'wcf_ca_oos_table_retry' ) ) {
+			return;
+		}
+
 		if ( ! class_exists( 'Cartflows_Ca_Database' ) ) {
 			include_once CARTFLOWS_CA_DIR . 'modules/cart-abandonment/classes/class-cartflows-ca-database.php';
 		}
@@ -131,7 +135,10 @@ class Cartflows_Ca_Oos_Warning {
 		// create is retried on the next load instead of being marked done.
 		if ( ! empty( $exists ) ) {
 			update_option( self::TABLE_VERSION_OPTION, self::TABLE_VERSION );
+			return;
 		}
+
+		set_transient( 'wcf_ca_oos_table_retry', 1, HOUR_IN_SECONDS );
 	}
 
 	/**
@@ -255,6 +262,11 @@ class Cartflows_Ca_Oos_Warning {
 
 		// Defensive: a scan can run in a cron context before any admin_init.
 		$this->maybe_create_table();
+
+		// Without the dedupe table every scan would resend the same alerts.
+		if ( version_compare( (string) get_option( self::TABLE_VERSION_OPTION, '0' ), self::TABLE_VERSION, '<' ) ) {
+			return;
+		}
 
 		// Start a new scan from the top; clear any buffer left by an aborted run.
 		delete_transient( self::SCAN_BUFFER );

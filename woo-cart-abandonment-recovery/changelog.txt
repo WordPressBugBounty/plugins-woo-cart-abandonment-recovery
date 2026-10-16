@@ -1,3 +1,6 @@
+Version 2.2.1 - Friday, 16th October 2026
+- Fix: Fixed an issue which was introduced in 2.2.0 where the plugin stopped working after updating on some older databases.
+
 Version 2.2.0 - Thursday, 15th October 2026
 - New: Added an admin warning email when products in abandoned carts go out of stock.
 - New: Added a bulk Unsubscribe action to Follow-Up reports.

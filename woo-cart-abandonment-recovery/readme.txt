@@ -3,7 +3,7 @@ Contributors: sujaypawar, wpcrafter
 Tags: woocommerce, cart abandonment, cart recovery
 Requires at least: 5.4
 Tested up to: 7.1
-Stable tag: 2.2.0
+Stable tag: 2.2.1
 Requires PHP: 7.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -163,6 +163,9 @@ You can report the issue through our [Bug Bounty Program](https://brainstormforc
 4. General settings for Email, Webhook (Coupon Code), GDPR
 
 == Changelog ==
+
+= Version 2.2.1 - Friday, 16th October 2026 =
+- Fix: Fixed an issue which was introduced in 2.2.0 where the plugin stopped working after updating on some older databases.
 
 = Version 2.2.0 - Thursday, 15th October 2026 =
 - New: Added an admin warning email when products in abandoned carts go out of stock.
