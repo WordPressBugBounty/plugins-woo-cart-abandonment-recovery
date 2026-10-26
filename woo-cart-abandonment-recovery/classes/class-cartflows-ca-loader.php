@@ -96,7 +96,7 @@ if ( ! class_exists( 'CARTFLOWS_CA_Loader' ) ) {
 			define( 'CARTFLOWS_CA_BASE', plugin_basename( CARTFLOWS_CA_FILE ) );
 			define( 'CARTFLOWS_CA_DIR', plugin_dir_path( CARTFLOWS_CA_FILE ) );
 			define( 'CARTFLOWS_CA_URL', plugins_url( '/', CARTFLOWS_CA_FILE ) );
-			define( 'CARTFLOWS_CA_VER', '2.2.1' );
+			define( 'CARTFLOWS_CA_VER', '2.2.2' );
 			define( 'CARTFLOWS_CA_DB_VER', '1.2.0' );
 			define( 'CARTFLOWS_CA_REQ_PRO_VER', '1.3.0' );
 

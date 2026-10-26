@@ -1,3 +1,7 @@
+Version 2.2.2 - Monday, 26th October 2026
+- Security: Hardened the abandoned carts CSV export.
+- Fix: Fixed a fatal error that could occur on some sites after updating.
+
 Version 2.2.1 - Friday, 16th October 2026
 - Fix: Fixed an issue which was introduced in 2.2.0 where the plugin stopped working after updating on some older databases.
 

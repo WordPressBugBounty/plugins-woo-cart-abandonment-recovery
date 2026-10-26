@@ -405,6 +405,37 @@ class Cartflows_Ca_Helper {
 	}
 
 	/**
+	 * Neutralise a CSV cell so spreadsheet apps read it as text, not a formula.
+	 *
+	 * Excel, Google Sheets and LibreOffice run a cell starting with =, +, -, @, tab,
+	 * carriage return or line feed as a formula, and some locales (e.g. Japanese)
+	 * also run the fullwidth ＝ ＋ － ＠. Excel in locales that use ; as the list
+	 * separator (e.g. DE, FR, NL) splits a comma CSV on ;, so a trigger after a
+	 * separator inside the value starts a new cell too. A comma is not treated as a
+	 * separator here: fputcsv() already quotes any value that contains one. A single
+	 * quote before each such trigger, and before any spaces or invisible format
+	 * characters leading up to it, makes the cell plain text.
+	 *
+	 * @since 2.2.2
+	 * @param mixed $value Cell value.
+	 * @return mixed
+	 */
+	public function escape_csv_value( $value ) {
+		if ( ! is_string( $value ) || '' === $value ) {
+			return $value;
+		}
+
+		$escaped = preg_replace(
+			'/(^|[;\t\r\n])(?=[\p{Zs}\p{Cf}]*[=+\-@\t\r\n\x{FF1D}\x{FF0B}\x{FF0D}\x{FF20}])/u',
+			"$1'",
+			$value
+		);
+
+		// Invalid UTF-8 can't be checked, so treat the whole cell as text.
+		return null === $escaped ? "'" . $value : $escaped;
+	}
+
+	/**
 	 * Function get the CartFlows upgrade to PRO link.
 	 *
 	 * Single source of truth for the "Upgrade to Pro" URL — the default UTM

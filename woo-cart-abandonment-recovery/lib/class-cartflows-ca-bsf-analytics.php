@@ -188,7 +188,11 @@ if ( ! class_exists( 'Cartflows_Ca_Bsf_Analytics' ) ) :
 		 */
 		public function get_specific_stats( $stats_data ) {
 
-			if ( apply_filters( 'cartflows_ca_enable_non_sensitive_data_tracking', get_option( 'wcar_usage_optin', false ) ) ) {
+			if ( empty( wcf_ca()->utils ) ) {
+				return $stats_data;
+			}
+
+			if ( apply_filters( 'cartflows_ca_enable_non_sensitive_data_tracking', 'yes' === get_option( 'wcar_usage_optin', false ) ) ) {
 
 				// Prepare default data to be tracked.
 				$stats_data['plugin_data']['cart_abandonment']                   = $this->get_default_stats();

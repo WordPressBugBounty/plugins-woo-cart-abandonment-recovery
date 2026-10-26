@@ -390,7 +390,10 @@ class Cartflows_Ca_Tabs {
 			fputcsv( //phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.file_ops_fputcsv
 				$data_file,
 				array_map(
-					'esc_html',
+					// Formula escape runs last, so it also covers the ; that esc_html() adds in &quot; and &#039;.
+					static function ( $cell ) {
+						return wcf_ca()->helper->escape_csv_value( esc_html( $cell ) );
+					},
 					[
 						$name['wcf_first_name'],
 						$name['wcf_last_name'],

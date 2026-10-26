@@ -3,7 +3,7 @@ Contributors: sujaypawar, wpcrafter
 Tags: woocommerce, cart abandonment, cart recovery
 Requires at least: 5.4
 Tested up to: 7.1
-Stable tag: 2.2.1
+Stable tag: 2.2.2
 Requires PHP: 7.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -163,6 +163,10 @@ You can report the issue through our [Bug Bounty Program](https://brainstormforc
 4. General settings for Email, Webhook (Coupon Code), GDPR
 
 == Changelog ==
+
+= Version 2.2.2 - Monday, 26th October 2026 =
+- Security: Hardened the abandoned carts CSV export.
+- Fix: Fixed a fatal error that could occur on some sites after updating.
 
 = Version 2.2.1 - Friday, 16th October 2026 =
 - Fix: Fixed an issue which was introduced in 2.2.0 where the plugin stopped working after updating on some older databases.
